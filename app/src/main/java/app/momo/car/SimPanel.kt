@@ -1,6 +1,7 @@
 package app.momo.car
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import app.momo.Graph
 import app.momo.core.SeatPos
 import app.momo.core.SeatState
+import app.momo.ui.Momo
 import app.momo.car.PleosCarSource.Companion.ITEM_DEST
 import app.momo.car.PleosCarSource.Companion.ITEM_DRIVING
 
@@ -39,15 +41,16 @@ fun SimPanel(modifier: Modifier = Modifier) {
     Column(modifier.padding(8.dp), horizontalAlignment = Alignment.End) {
         if (open) Column(
             Modifier.width(360.dp).heightIn(max = 460.dp)
-                .background(Color(0xE6181C20), RoundedCornerShape(12.dp))
+                .background(Glass, RoundedCornerShape(20.dp))
+                .border(1.dp, Momo.Line, RoundedCornerShape(20.dp))
                 .verticalScroll(rememberScrollState())
-                .padding(10.dp),
+                .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text(summary(car), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text(summary(car), color = Momo.Ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             Text(
                 if (car.live.isEmpty()) "SDK 값 없음: 전부 시뮬레이터" else liveSummary(car.live),
-                color = Color(0xFF7FD1FF), fontSize = 11.sp,
+                color = Momo.Sub, fontSize = 11.sp,
             )
             Line("모드") {
                 Chip("실제 SDK", useSdk) { pleos?.setUseSdk(true) }
@@ -89,10 +92,11 @@ fun SimPanel(modifier: Modifier = Modifier) {
         }
         Spacer(Modifier.height(6.dp))
         Box(
-            Modifier.background(Color(0x99181C20), RoundedCornerShape(8.dp))
+            Modifier.background(Glass, Pill)
+                .border(1.dp, Momo.Line, Pill)
                 .clickable { open = !open }
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-        ) { Text(if (open) "닫기" else "시연", color = Color.White, fontSize = 12.sp) }
+                .padding(horizontal = 14.dp, vertical = 6.dp),
+        ) { Text(if (open) "닫기" else "시연", color = Momo.Ink, fontSize = 12.sp) }
     }
 }
 
@@ -115,13 +119,17 @@ private fun Line(label: String, content: @Composable RowScope.() -> Unit) = Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(4.dp),
 ) {
-    Text(label, color = Color(0xFFB0BEC5), fontSize = 12.sp, modifier = Modifier.width(56.dp))
+    Text(label, color = Momo.Sub, fontSize = 12.sp, modifier = Modifier.width(56.dp))
     content()
 }
 
 @Composable
 private fun Chip(label: String, on: Boolean, onClick: () -> Unit) = Box(
-    Modifier.background(if (on) Color(0xFF2E7DFF) else Color(0xFF2A3036), RoundedCornerShape(6.dp))
+    Modifier.background(if (on) Momo.Accent else Momo.Surface, Pill)
         .clickable(onClick = onClick)
-        .padding(horizontal = 8.dp, vertical = 6.dp),
-) { Text(label, color = Color.White, fontSize = 12.sp) }
+        .padding(horizontal = 12.dp, vertical = 6.dp),
+) { Text(label, color = if (on) Momo.OnAccent else Momo.Ink, fontSize = 12.sp) }
+
+/** Figma 양식: 반투명 흰 유리 카드, 알약 버튼 */
+private val Glass = Color(0xD9FFFFFF)
+private val Pill = RoundedCornerShape(50)
