@@ -15,7 +15,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Graph.init(this)
-        permissions.launch(arrayOf("android.car.permission.CAR_SPEED", "android.permission.RECORD_AUDIO"))
+        // 주행 여부는 권한이 필요 없는 CarUxRestrictions로 판단한다. CAR_SPEED는 AAOS에서 위치 권한으로 묻기 때문에 요청하지 않는다
+        permissions.launch(arrayOf("android.permission.RECORD_AUDIO"))
         setContent { MomoTheme { MomoApp() } }
     }
 }

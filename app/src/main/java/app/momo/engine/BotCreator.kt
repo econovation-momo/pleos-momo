@@ -272,7 +272,7 @@ object Slots {
         return StoryBot(
             id = "my_$now",
             title = "${name}의 $world".take(20),
-            oneLiner = "방금 말로 만든 봇",
+            oneLiner = "${name.josa("과", "와")} 함께하는 $world 이야기".take(30), // 마켓 카드에 보이는 30자 소개
             description = "${character.replace(" · ", ", ")}. ${world}에서 모험해요.",
             creator = "나",
             character = Character(name, "$character. 말투: ${d.tone}.", d.voice ?: "밝은 아이 목소리"),
