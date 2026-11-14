@@ -34,7 +34,8 @@ fun EndingScreen(app: AppState, car: CarState) {
     val card = play.ending ?: app.endingCards.firstOrNull() ?: return
     val bot = app.bots.firstOrNull { it.id == card.botId } ?: app.bot
     val leave = { to: Screen -> Graph.engine.stop(); AppStore.go(to) }
-    val scenes = if (play.ending != null) play.sceneIndex + 1 else card.minutes / 2
+    // 장면 수는 방금 끝난 이야기에서만 정확히 안다. 보관함 샘플 카드에는 숫자를 붙이지 않는다.
+    val scenes = if (play.ending != null) play.sceneIndex + 1 else null
     var qr by remember { mutableStateOf(false) }
 
     HeroScreen(
@@ -44,9 +45,9 @@ fun EndingScreen(app: AppState, car: CarState) {
                 QrPlaceholder(card.title, Modifier.align(Alignment.CenterHorizontally))
                 Spacer(Modifier.height(14.dp))
                 Text("부모 폰으로 공유", Modifier.fillMaxWidth(), color = Momo.Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                Text("QR을 찍으면 엔딩 카드와 오늘의 그림책이 열려요", Modifier.fillMaxWidth(), color = Momo.Sub, fontSize = 15.sp, textAlign = TextAlign.Center, style = KoBreak)
+                Text("QR을 찍으면 엔딩 카드와 오늘의 장면 그림이 열려요", Modifier.fillMaxWidth(), color = Momo.Sub, fontSize = 15.sp, textAlign = TextAlign.Center, style = KoBreak)
             } else PosterCard(
-                bot, title = card.title, meta = listOf(card.grade, "${scenes}장면", "${card.minutes}분"), body = card.summary,
+                bot, title = card.title, meta = listOfNotNull(card.grade, scenes?.let { "${it}장면" }, "${card.minutes}분"), body = card.summary,
                 image = bot.scenes.lastOrNull() ?: bot.cover, badge = "No. %02d".format(app.endingCards.size),
             )
         },

@@ -65,8 +65,11 @@ val Gutter = 24.dp
 /** 이야기 길이(분): 내비 남은 시간이 우선이고, 없으면 '목적지 없이 시작'에서 고른 값, 그것도 없으면 30분. */
 fun rideMin(app: AppState, car: CarState): Int = car.remainSec?.let { it / 60 } ?: app.rideMin ?: 30
 
-/** 목표 장면 수. 엔진과 같은 기준(2분에 한 장면)으로 미리 보여 준다. */
-fun scenesFor(min: Int) = (min / 2).coerceAtLeast(3)
+/** 목표 장면 수. 엔진 계산(Pacing.sceneCount)을 그대로 써서 화면과 엔진이 같은 숫자를 낸다. */
+fun scenesFor(min: Int) = app.momo.engine.Pacing.sceneCount(min * 60)
+
+/** 남은 거리: 1km 미만은 소수 한 자리(0.4km), 그 이상은 정수 km */
+fun kmLabel(meters: Int) = if (meters < 1000) "%.1fkm".format(meters / 1000f) else "${meters / 1000}km"
 
 fun destLabel(app: AppState, car: CarState) =
     car.destination?.let { "${it}까지 ${rideMin(app, car)}분" } ?: "목적지 없이 ${rideMin(app, car)}분 이야기"

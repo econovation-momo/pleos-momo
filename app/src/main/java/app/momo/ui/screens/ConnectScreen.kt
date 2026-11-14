@@ -35,7 +35,7 @@ fun ConnectScreen(app: AppState, car: CarState) {
                 kicker = "차량 연결 완료",
                 title = "${car.destination}까지 ${min}분",
                 subtitle = "도착하면 이야기도 함께 끝나요",
-                meta = listOfNotNull(car.remainMeters?.let { "${it / 1000}km" }, "약 ${scenesFor(min)}장면", "${car.riders}명 탑승"),
+                meta = listOfNotNull(car.remainMeters?.let(::kmLabel), "약 ${scenesFor(min)}장면", "${car.riders}명 탑승"),
             )
         } else {
             HeroHeader(

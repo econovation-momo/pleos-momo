@@ -71,6 +71,13 @@ fun PlayScreen(app: AppState, car: CarState) {
                         play.llmName.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty(),
                     Modifier.align(Alignment.End), color = ink.copy(alpha = .7f), fontSize = 15.sp,
                 )
+                // 나가는 길: 정차 중에만 보인다(주행 중 오조작 방지)
+                if (!driving) {
+                    Spacer(Modifier.height(10.dp))
+                    GhostButton("이야기 그만하기", Modifier.align(Alignment.End), fontSize = 15.sp) {
+                        Graph.engine.stop(); AppStore.go(Screen.HOME)
+                    }
+                }
             }
         },
         bottomStart = { ink -> TurnBadge(play, status, ink, driving) },
