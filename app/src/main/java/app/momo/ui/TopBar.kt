@@ -33,7 +33,7 @@ fun TopBar(app: AppState, gear: String, driving: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.background(Momo.Ink, RoundedCornerShape(6.dp)).padding(horizontal = 18.dp, vertical = 8.dp)) {
-            Text("MOMO", color = Momo.OnAccent, fontSize = 22.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+            Text("MOMO", color = Momo.OnAccent, fontSize = 22.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
         }
         if (!driving && app.screen != Screen.PLAY && app.screen != Screen.CONNECT) {
             Spacer(Modifier.width(24.dp))
@@ -60,11 +60,11 @@ fun TopBar(app: AppState, gear: String, driving: Boolean) {
         "PRND".forEach { g ->
             Text(
                 g.toString(), Modifier.padding(horizontal = 5.dp), fontSize = 20.sp,
-                color = if (g.toString() == gear) Momo.Ink else Momo.Line, fontWeight = FontWeight.Medium,
+                color = if (g.toString() == gear) Momo.Ink else Momo.Line, fontWeight = FontWeight.Normal,
             )
         }
         Spacer(Modifier.width(24.dp))
-        Text(SimpleDateFormat("HH:mm", Locale.KOREA).format(now), fontSize = 20.sp, fontWeight = FontWeight.Medium)
+        Text(SimpleDateFormat("HH:mm", Locale.KOREA).format(now), fontSize = 20.sp, fontWeight = FontWeight.Normal)
     }
 }
 

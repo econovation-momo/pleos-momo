@@ -28,10 +28,7 @@ import app.momo.core.Phase
 import app.momo.core.Screen
 import app.momo.engine.PlayState
 import app.momo.ui.Momo
-import app.momo.ui.components.Cover
-import app.momo.ui.components.KoBreak
-import app.momo.ui.components.MicIcon
-import app.momo.ui.components.PillButton
+import app.momo.ui.components.*
 import app.momo.voice.VoiceStatus
 
 /**
@@ -53,7 +50,7 @@ fun PlayScreen(app: AppState, car: CarState) {
         Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             Text("이야기가 아직 시작되지 않았어요", fontSize = 23.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(16.dp))
-            PillButton("홈으로") { AppStore.go(Screen.HOME) }
+            PillButton("홈으로", onImage = false) { AppStore.go(Screen.HOME) }
         }
         return
     }
@@ -111,7 +108,7 @@ private fun ChapterBar(play: PlayState, ink: Color, modifier: Modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
             chapters.forEachIndexed { i, title ->
                 Column(Modifier.weight(1f)) {
-                    Box(Modifier.fillMaxWidth().height(5.dp).background(ink.copy(alpha = if (i <= play.chapter) 1f else .25f), RoundedCornerShape(50)))
+                    ProgressBar(if (i <= play.chapter) 1f else 0f, ink, Modifier.fillMaxWidth())
                     Spacer(Modifier.height(7.dp))
                     Text(title, color = ink.copy(alpha = if (i <= play.chapter) 1f else .5f), fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
@@ -120,7 +117,7 @@ private fun ChapterBar(play: PlayState, ink: Color, modifier: Modifier) {
         Spacer(Modifier.height(7.dp))
         Text(
             "${play.phase.label} · 도착까지 ${play.remainSec / 60}분 · 장면 ${play.sceneIndex + 1}/${play.sceneCount}",
-            Modifier.align(Alignment.End), color = ink.copy(alpha = .7f), fontSize = 15.sp, fontWeight = FontWeight.Medium,
+            Modifier.align(Alignment.End), color = ink.copy(alpha = .7f), fontSize = 15.sp,
         )
     }
 }
@@ -133,7 +130,7 @@ private fun TurnBadge(play: PlayState, status: VoiceStatus, ink: Color, driving:
         Box(
             Modifier.size(56.dp).background(if (listening) Momo.Ink else ink.copy(alpha = .15f), CircleShape),
             Alignment.Center,
-        ) { MicIcon(if (listening) Color.White else ink, 24.dp) }
+        ) { MicGlyph(if (listening) Color.White else ink, 24.dp) }
         Spacer(Modifier.width(12.dp))
         Column {
             Text(
@@ -159,8 +156,9 @@ private fun HeardCard(text: String, by: String?, driving: Boolean) {
     val fg = if (driving) Momo.Ink else Color.White
     Column(
         Modifier.width(600.dp)
-            .background(if (driving) Color.White else Color.White.copy(alpha = .22f), RoundedCornerShape(20.dp))
-            .border(2.dp, if (driving) Momo.Line else Color.White.copy(alpha = .7f), RoundedCornerShape(20.dp))
+            // 유리 카드 기준: 주행 중에는 흰색 85%, 정차 중에는 장면 그림이 비치도록 옅게(21:88)
+            .background(Color.White.copy(alpha = if (driving) .85f else .22f), RoundedCornerShape(20.dp))
+            .border(1.dp, Color.White.copy(alpha = .9f), RoundedCornerShape(20.dp))
             .padding(horizontal = 24.dp, vertical = 15.dp),
     ) {
         Text("방금 들은 말" + (by?.let { " · $it" } ?: ""), color = fg.copy(alpha = .7f), fontSize = 15.sp)
@@ -180,15 +178,7 @@ private fun DemoChips(play: PlayState) {
     }
     Row(Modifier.padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
         Text("시연 입력", color = Color.White.copy(alpha = .7f), fontSize = 15.sp)
-        samples.forEach { s -> SmallChip(s) { Graph.voice.inject(s) } }
-        if (play.phase < Phase.ENDING) SmallChip("결말로 건너뛰기") { Graph.engine.skipToEnding() }
+        samples.forEach { s -> GhostButton(s, fontSize = 15.sp) { Graph.voice.inject(s) } }
+        if (play.phase < Phase.ENDING) GhostButton("결말로 건너뛰기", fontSize = 15.sp) { Graph.engine.skipToEnding() }
     }
 }
-
-@Composable
-private fun SmallChip(text: String, onClick: () -> Unit) = Text(
-    text,
-    Modifier.clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = .45f)).clickable(onClick = onClick)
-        .padding(horizontal = 12.dp, vertical = 5.dp),
-    color = Color.White, fontSize = 15.sp,
-)

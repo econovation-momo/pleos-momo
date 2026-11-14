@@ -26,11 +26,6 @@ import app.momo.core.Screen
 import app.momo.core.StoryBot
 import app.momo.ui.Momo
 import app.momo.ui.components.*
-import app.momo.ui.components.MicIcon
-import app.momo.ui.components.PillButton
-import app.momo.ui.components.destLabel
-import app.momo.ui.components.metaLine
-import app.momo.ui.components.rideMin
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -73,14 +68,14 @@ fun HomeScreen(app: AppState, car: CarState) {
             }
         }
 
-        Row(Modifier.fillMaxWidth().padding(start = 32.dp, end = 107.dp, bottom = 19.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(start = Gutter, end = 107.dp, bottom = 19.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(destLabel(app, car), fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 Text("도착하면 이야기도 끝나요", fontSize = 17.sp, color = Momo.Sub)
             }
-            PillButton("말로 새 이야기 봇 만들기", dark = false, leading = { MicIcon(Momo.Ink) }) { AppStore.open(Overlay.CREATE) }
-            Spacer(Modifier.width(11.dp))
-            PillButton("마켓 전체 보기") { AppStore.go(Screen.MARKET) }
+            GhostButton("말로 새 이야기 봇 만들기", onImage = false) { AppStore.open(Overlay.CREATE) }
+            Spacer(Modifier.width(12.dp))
+            PillButton("마켓 전체 보기", onImage = false, height = 56.dp, fontSize = 18.sp) { AppStore.go(Screen.MARKET) }
         }
     }
 }
@@ -88,12 +83,7 @@ fun HomeScreen(app: AppState, car: CarState) {
 @Composable
 private fun BotCard(bot: StoryBot, min: Int, focused: Boolean, onClick: () -> Unit) {
     Box(Modifier.width(CARD_W).height(if (focused) 500.dp else 472.dp).clickable(onClick = onClick)) {
-        Cover(bot, Modifier.fillMaxSize())
-        Box(
-            Modifier.fillMaxSize().background(
-                Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = .9f)),
-            ),
-        )
+        Hero(bot, Modifier.fillMaxSize(), scrim = Scrim.BOTTOM)
         Column(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 25.dp, vertical = 27.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -103,14 +93,14 @@ private fun BotCard(bot: StoryBot, min: Int, focused: Boolean, onClick: () -> Un
                 textAlign = TextAlign.Center, maxLines = 2, style = KoBreak,
             )
             Spacer(Modifier.height(11.dp))
-            Text(metaLine(bot, min), color = Color.White.copy(alpha = .8f), fontSize = 15.sp)
+            MetaLine(botMeta(bot, min), Color.White.copy(alpha = .8f))
             Spacer(Modifier.height(21.dp))
             Text(
                 bot.description, Modifier.fillMaxWidth(), color = Color.White, fontSize = 15.sp, lineHeight = 23.sp,
                 maxLines = 2, overflow = TextOverflow.Ellipsis,
             )
         }
-        // 양옆 카드는 흐리게
-        if (!focused) Box(Modifier.fillMaxSize().background(Color.White.copy(alpha = .45f)))
+        // 양옆 카드는 흐리게(흰색을 덮어 알파 약 0.4로 보이게)
+        if (!focused) Box(Modifier.fillMaxSize().background(Color.White.copy(alpha = .55f)))
     }
 }

@@ -24,6 +24,7 @@ import app.momo.core.AppStore
 import app.momo.core.Overlay
 import app.momo.core.Screen
 import app.momo.core.StoryBot
+import app.momo.ui.Momo
 import app.momo.voice.VoiceStatus
 import app.momo.ui.components.*
 import kotlinx.coroutines.launch
@@ -38,50 +39,37 @@ fun DetailScreen(app: AppState, car: CarState) {
     val voice by Graph.voice.status.collectAsStateWithLifecycle()
     val sample = bot.exampleDialogues.firstOrNull()?.substringAfter(": ") ?: bot.oneLiner
 
-    Box(Modifier.fillMaxSize().padding(start = 19.dp, end = 19.dp, bottom = 19.dp).clip(RoundedCornerShape(3.dp))) {
-        // 가로로 긴 장면 그림이 있으면 배경으로, 없으면 대표 이미지
-        Cover(bot, Modifier.fillMaxSize(), image = bot.scenes.firstOrNull() ?: bot.cover)
-        Box(
-            Modifier.fillMaxSize().background(
-                Brush.horizontalGradient(0f to Color.Black.copy(alpha = .85f), .45f to Color.Black.copy(alpha = .45f), .75f to Color.Transparent),
-            ),
-        )
-
+    Hero(
+        bot, Modifier.fillMaxSize().padding(start = Gutter, end = Gutter, bottom = Gutter).clip(RoundedCornerShape(4.dp)),
+        image = bot.scenes.firstOrNull() ?: bot.cover, // 가로로 긴 장면 그림이 있으면 배경으로
+    ) {
         Column(
             Modifier.fillMaxHeight().fillMaxWidth(.55f).padding(start = 48.dp, end = 16.dp),
             verticalArrangement = Arrangement.Center,
         ) {
-            Text("STORY BOT · ${bot.character.name}", color = Color.White, fontSize = 21.sp)
-            Spacer(Modifier.height(11.dp))
-            Text(bot.title, color = Color.White, fontSize = 45.sp, lineHeight = 53.sp, fontWeight = FontWeight.Bold, maxLines = 2, style = KoBreak)
-            Spacer(Modifier.height(5.dp))
+            Text("STORY BOT · ${bot.character.name}", color = Color.White, fontSize = 22.sp)
+            Spacer(Modifier.height(10.dp))
+            Text(bot.title, color = Color.White, fontSize = 40.sp, lineHeight = 48.sp, fontWeight = FontWeight.Bold, maxLines = 2, style = KoBreak)
+            Spacer(Modifier.height(4.dp))
             Text(bot.oneLiner, color = Color.White, fontSize = 21.sp, lineHeight = 28.sp)
-            Spacer(Modifier.height(24.dp))
-            Text(metaLine(bot, min), color = Color.White.copy(alpha = .7f), fontSize = 15.sp)
-            Spacer(Modifier.height(24.dp))
-            Text(
-                bot.description, color = Color.White, fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Medium,
-                maxLines = 3, overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(27.dp))
+            Spacer(Modifier.height(22.dp))
+            MetaLine(botMeta(bot, min), Color.White.copy(alpha = .7f))
+            Spacer(Modifier.height(22.dp))
+            Text(bot.description, color = Color.White, fontSize = 18.sp, lineHeight = 28.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(26.dp))
             StartBar(bot, start.minutes, destLabel(app, car))
-            Spacer(Modifier.height(29.dp))
+            Spacer(Modifier.height(28.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                PillButton("이 봇으로 출발 준비", dark = false, height = 61.dp, fontSize = 20.sp, leading = { PlayIcon() }) {
-                    AppStore.go(Screen.PLAYERS)
-                }
-                Spacer(Modifier.width(13.dp))
+                PillButton("이 봇으로 출발 준비", height = 64.dp, fontSize = 22.sp) { AppStore.go(Screen.PLAYERS) }
+                Spacer(Modifier.width(12.dp))
                 // 목소리 미리듣기: 예시 대사 한 줄을 캐릭터 목소리로 말한다
-                Text(
-                    if (voice == VoiceStatus.SPEAKING) "말하는 중…" else "목소리 미리듣기",
-                    Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = .18f))
-                        .clickable { scope.launch { Graph.voice.speak(sample) } }.padding(horizontal = 21.dp, vertical = 16.dp),
-                    color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold,
-                )
+                GhostButton(if (voice == VoiceStatus.SPEAKING) "말하는 중…" else "목소리 미리듣기") {
+                    scope.launch { Graph.voice.speak(sample) }
+                }
             }
         }
 
-        InfoPanel(app, bot, sample, Modifier.align(Alignment.TopEnd).padding(24.dp).width(430.dp))
+        InfoPanel(app, bot, sample, Modifier.align(Alignment.TopEnd).padding(24.dp).width(400.dp))
     }
 }
 
@@ -90,13 +78,11 @@ fun DetailScreen(app: AppState, car: CarState) {
 private fun StartBar(bot: StoryBot, picked: Int, dest: String) {
     val starts = bot.starts.map { it.minutes }.sorted()
     val idx = starts.indexOf(picked)
-    Column(Modifier.width(413.dp)) {
-        Text("시작 설정 ${minLabel(picked)} · $dest", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(9.dp))
-        Box(Modifier.fillMaxWidth().height(7.dp).background(Color.White.copy(alpha = .3f), RoundedCornerShape(50))) {
-            Box(Modifier.fillMaxWidth((idx + 1f) / starts.size).fillMaxHeight().background(Color.White, RoundedCornerShape(50)))
-        }
-        Spacer(Modifier.height(7.dp))
+    Column(Modifier.width(400.dp)) {
+        Text("시작 설정 ${minLabel(picked)} · $dest", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(10.dp))
+        ProgressBar((idx + 1f) / starts.size, Color.White, Modifier.fillMaxWidth())
+        Spacer(Modifier.height(8.dp))
         Row {
             starts.forEach { m ->
                 Text(
@@ -109,40 +95,28 @@ private fun StartBar(bot: StoryBot, picked: Int, dest: String) {
     }
 }
 
-/** 오른쪽 위 정보 카드: 캐릭터, 맡을 역할, 만든 사람·팔로우, 신고 */
+/** 오른쪽 위 유리 카드: 캐릭터, 맡을 역할, 만든 사람·팔로우, 신고 */
 @Composable
 private fun InfoPanel(app: AppState, bot: StoryBot, sample: String, modifier: Modifier) {
     val following = bot.creator in app.following
-    Column(modifier.background(Color.Black.copy(alpha = .55f), RoundedCornerShape(16.dp)).padding(19.dp)) {
-        Text("${bot.character.name} · ${bot.character.voice}", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(5.dp))
-        Text("“$sample”", color = Color.White.copy(alpha = .85f), fontSize = 18.sp, lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        Spacer(Modifier.height(15.dp))
-        Text("맡을 역할 · 탑승자마다 하나씩", color = Color.White.copy(alpha = .6f), fontSize = 15.sp)
-        Spacer(Modifier.height(7.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-            bot.roles.forEach { GlassChip(it) }
-        }
-        Spacer(Modifier.height(15.dp))
+    GlassCard(modifier) {
+        Text("${bot.character.name} · ${bot.character.voice}", color = Momo.Ink, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(4.dp))
+        Text("“$sample”", color = Momo.Ink, fontSize = 17.sp, lineHeight = 24.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.height(14.dp))
+        Text("맡을 역할 · 탑승자마다 하나씩", color = Momo.Sub, fontSize = 15.sp)
+        Text(bot.roles.joinToString("  ·  "), color = Momo.Ink, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("만든 사람 ${bot.creator} · ${"%,d".format(bot.plays)}회", color = Color.White, fontSize = 16.sp)
-            Spacer(Modifier.width(8.dp))
-            GlassChip(if (following) "팔로잉" else "팔로우 +", on = following) {
-                AppStore.update { it.copy(following = if (following) it.following - bot.creator else it.following + bot.creator) }
-            }
+            Text("만든 사람 ${bot.creator} · ${"%,d".format(bot.plays)}회", color = Momo.Sub, fontSize = 15.sp)
             Spacer(Modifier.weight(1f))
             Text(
-                "신고", Modifier.clickable { AppStore.open(Overlay.REPORT) }.padding(5.dp),
-                color = Color.White.copy(alpha = .7f), fontSize = 16.sp,
+                if (following) "팔로잉" else "팔로우 +",
+                Modifier.clickable { AppStore.update { it.copy(following = if (following) it.following - bot.creator else it.following + bot.creator) } }
+                    .padding(6.dp),
+                color = Momo.Ink, fontSize = 16.sp, fontWeight = FontWeight.Bold,
             )
+            Text("신고", Modifier.clickable { AppStore.open(Overlay.REPORT) }.padding(6.dp), color = Momo.Sub, fontSize = 16.sp)
         }
     }
 }
-
-@Composable
-private fun GlassChip(text: String, on: Boolean = false, onClick: (() -> Unit)? = null) = Text(
-    text,
-    Modifier.clip(RoundedCornerShape(8.dp)).background(if (on) Color.White else Color.White.copy(alpha = .18f))
-        .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(horizontal = 9.dp, vertical = 4.dp),
-    color = if (on) Color.Black else Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium,
-)
