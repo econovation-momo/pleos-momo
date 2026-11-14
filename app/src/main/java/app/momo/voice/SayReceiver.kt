@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 
 /**
  * 시연 백업: 에뮬레이터 마이크가 안 될 때 adb로 사용자 발화를 넣는다.
- *   adb shell am broadcast -a app.momo.SAY --es text "어서 도망가!" -p app.momo
+ *   adb shell "am broadcast -a app.momo.SAY --es text '어서 도망가!' -p app.momo"   (호스트 셸에서는 이렇게 따옴표를 겹쳐야 공백이 안 잘린다)
  * TTS 확인용: --es speak "첫 문장.|둘째 문장." 처럼 |로 나누면 문장마다 따로 speak를 불러 순서 보장을 확인한다.
  * STT 확인용: --ez listen true 를 보내면 마이크 인식을 시작한다.
  * 내비 확인용: --ez route true 를 보내면 실제 내비에 공식 문서 예제 목적지로 경로를 요청한다.

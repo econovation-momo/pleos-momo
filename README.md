@@ -53,9 +53,9 @@ release APK만 설치할 때는 `adb install -r apk/econovation_MOMO_release.apk
 1. 앱을 실행하면 차량 연결 화면(S0)이 내비 목적지와 좌석을 읽습니다. 목적지를 받으면 1.5초 뒤 홈으로 넘어갑니다.
 2. 에뮬레이터에 내비 목적지나 좌석 신호가 없으면 화면 우측 하단의 **'시연'** 버튼으로 시뮬레이터 패널을 엽니다. 이 패널에서 목적지(할머니 댁 45분 등), 주행/정차, 시간 배속(1x/10x/30x), 도착 5분 전, 도착, 좌석별 착좌·벨트를 바꿉니다. 실제 SDK에서 받은 값은 패널에 `SDK`로 표시되고, 시뮬레이터로 바꾼 항목만 덮어씁니다.
 3. 주행 상태는 Virtual Console(`./scripts/dev.sh console`)에서 기어 D + ACCEL로도 바꿀 수 있습니다.
-4. 에뮬레이터 마이크가 동작하지 않으면 adb로 사용자 발화를 넣습니다. 정차 중 화면의 시연 입력 버튼도 같은 효과를 냅니다.
+4. 에뮬레이터 마이크가 동작하지 않으면 adb로 사용자 발화를 넣습니다. 정차 중 화면의 시연 입력 버튼도 같은 효과를 냅니다. 공백이 잘리지 않도록 따옴표를 아래처럼 겹쳐 씁니다. `-allow-host-audio`로 켠 에뮬레이터는 개발 머신 주변 소리를 그대로 인식하므로, 시연 영상을 찍을 때는 조용한 곳에서 찍거나 마이크를 끄고 이 명령을 씁니다.
    ```bash
-   adb shell am broadcast -a app.momo.SAY --es text "어서 도망가!" -p app.momo
+   adb shell "am broadcast -a app.momo.SAY --es text '어서 도망가!' -p app.momo"
    ```
 5. 디버그용 SDK 신호 검증 화면: `adb shell am start -n app.momo/.pleos.SdkCheckActivity`
 

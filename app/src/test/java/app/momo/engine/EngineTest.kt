@@ -151,3 +151,19 @@ class ScriptTest {
         assertEquals(listOf("우와!", "가자.", "지우 기사님, 어때?"), splitSentences("우와! 가자. 지우 기사님, 어때?"))
     }
 }
+
+class RegressionTest {
+    /** 통합 검증 2-4: '도착 5분 전으로' 재계산 뒤에도 시간이 지나면 장면 번호가 올라가야 한다 */
+    @org.junit.Test fun sceneIndexAdvancesAfterResync() {
+        val n = Pacing.resyncedCount(0, 298)
+        org.junit.Assert.assertEquals(0, Pacing.sceneIndex(n, 298))
+        org.junit.Assert.assertTrue(Pacing.sceneIndex(n, 100) > 0)
+    }
+
+    /** 통합 검증 2-1: 목소리로 분류된 말은 지금 묻는 칸(세계관)에 들어가면 안 된다 */
+    @org.junit.Test fun voiceAnswerDoesNotFillWorld() {
+        val d = Slots.heuristic("밝은 아이 목소리로!", "세계관")
+        org.junit.Assert.assertNull(d.world)
+        org.junit.Assert.assertNotNull(d.voice)
+    }
+}

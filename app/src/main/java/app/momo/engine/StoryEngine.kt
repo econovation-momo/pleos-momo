@@ -73,7 +73,8 @@ object Pacing {
     fun needsResync(localSec: Int, naviSec: Int) = abs(localSec - naviSec) > RESYNC_SEC
 
     /** 재탐색·정체로 남은 시간이 바뀌면 지금 장면 뒤로 남은 장면 수만 다시 잡는다. */
-    fun resyncedCount(currentIndex: Int, newRemainSec: Int) = currentIndex + sceneCount(newRemainSec)
+    // sceneIndex와 같은 올림 기준을 써야 재계산 뒤에도 장면 번호가 시간에 따라 올라간다
+    fun resyncedCount(currentIndex: Int, newRemainSec: Int) = currentIndex + (newRemainSec + SCENE_SEC - 1) / SCENE_SEC
 
     /** 시간 기준 장에, 턴 수 기준으로 한 장까지 앞서 가는 것을 허용한다. */
     fun chapter(chapters: Int, sceneIndex: Int, sceneCount: Int, turns: Int, ending: Boolean): Int {
@@ -127,6 +128,7 @@ class StoryEngine(
     private var bestHeard = ""
     private var naviMode = false
     private var arriving = false
+    private var startedAt = 0L
 
     fun start(bot: StoryBot, players: List<Player>, destination: String, budgetSec: Int) {
         stop()
@@ -134,7 +136,9 @@ class StoryEngine(
         useScript = llm is ScriptedLlm
         inputs = Channel(Channel.CONFLATED)
         history.clear(); turnNo = 0; heardCount = 0; bestHeard = ""; arriving = false
-        naviMode = car.state.value.remainSec != null
+        // 남은 1분 이하인 목적지(도착 직후 남은 값 등)는 내비 목적지로 보지 않고 고른 길이 타이머를 쓴다
+        naviMode = (car.state.value.remainSec ?: 0) > 60
+        startedAt = System.currentTimeMillis()
         val budget = budgetSec.coerceAtLeast(60)
         _state.value = repace(
             PlayState(
@@ -148,7 +152,7 @@ class StoryEngine(
         session = scope.launch {
             launch { clock() }
             launch { car.events.collect { if (it == CarEvent.Arrived) arrive() else car.refreshDestination() } }
-            launch { car.state.map { it.remainSec }.distinctUntilChanged().collect { r -> if (r != null) { naviMode = true; resync(r) } } }
+            launch { car.state.map { it.remainSec }.distinctUntilChanged().collect { r -> if (r != null && r > 0) { naviMode = true; resync(r) } } }
             launch { voice.status.collect { s -> _state.update { it.copy(status = s) } } }
             launch { voice.heard.collect { inputs.trySend(it) } }
         }
@@ -192,13 +196,15 @@ class StoryEngine(
 
     private suspend fun clock() {
         var sec = 0
+        var zeroFor = 0
         while (true) {
             delay(1000)
             sec++
             if (sec % 60 == 0) car.refreshDestination()
             _state.update { if (it.running) repace(it.copy(remainSec = (it.remainSec - 1).coerceAtLeast(0))) else it }
-            // 내비 목적지가 없으면 출발 때 받은 시간이 다 되면 도착으로 본다
-            if (!naviMode && _state.value.remainSec == 0) arrive()
+            // 내비 목적지가 없으면 시간이 다 되는 즉시, 내비가 있으면 도착 이벤트를 60초 더 기다린 뒤 도착으로 본다
+            zeroFor = if (_state.value.remainSec == 0) zeroFor + 1 else 0
+            if (zeroFor > 0 && (!naviMode || zeroFor >= 60)) arrive()
         }
     }
 
@@ -348,7 +354,8 @@ class StoryEngine(
             append(if (chapter != null) "‘$chapter’까지 이야기를 만들었어요." else "이야기를 끝까지 만들었어요.")
             if (bestHeard.isNotBlank()) append(" “${bestHeard.take(20)}” 한마디가 이야기를 바꿨어요.")
         }
-        val minutes = (maxOf(s.budgetSec, s.budgetSec - s.remainSec) / 60).coerceAtLeast(1)
+        // 실제로 탄 시간(시연에서 도착 버튼을 일찍 눌러도 출발 예산이 아니라 탄 만큼)
+        val minutes = ((System.currentTimeMillis() - startedAt) / 60_000).toInt().coerceAtLeast(1)
         return EndingCard(
             botId = bot.id, title = ending.title, grade = grade, summary = summary,
             destination = s.destination.ifBlank { "목적지" }, minutes = minutes,
