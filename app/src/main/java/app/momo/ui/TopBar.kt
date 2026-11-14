@@ -1,5 +1,8 @@
 package app.momo.ui
 
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import app.momo.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -32,8 +35,8 @@ fun TopBar(app: AppState, gear: String, driving: Boolean) {
         Modifier.fillMaxWidth().height(72.dp).background(Momo.Bg).padding(horizontal = 24.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.background(Momo.Ink, RoundedCornerShape(6.dp)).padding(horizontal = 18.dp, vertical = 8.dp)) {
-            Text("MOMO", color = Momo.OnAccent, fontSize = 22.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+        Box(Modifier.background(Momo.Ink, RoundedCornerShape(6.dp)).padding(horizontal = 16.dp, vertical = 10.dp)) {
+            Image(painterResource(R.drawable.logo_momo), "MOMO", Modifier.height(22.dp))
         }
         if (!driving && app.screen != Screen.PLAY && app.screen != Screen.CONNECT) {
             Spacer(Modifier.width(24.dp))
