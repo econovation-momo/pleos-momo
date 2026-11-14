@@ -1,8 +1,6 @@
 package app.momo.ui.overlays
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,41 +28,26 @@ fun ReportSheet(app: AppState) {
     var sent by remember { mutableStateOf(false) }
 
     Modal(520.dp) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconBox("⚑")
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(if (sent) "신고가 접수됐어요" else "무엇이 문제였나요?", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text("${bot.title} · ${bot.creator}", fontSize = 13.sp, color = Momo.Sub)
-            }
-            IconBox("✕") { AppStore.close() }
-        }
-        Spacer(Modifier.height(16.dp))
+        ModalHeader(if (sent) "신고가 접수됐어요" else "무엇이 문제였나요?", listOf(bot.title, bot.creator))
+        Spacer(Modifier.height(18.dp))
         if (!sent) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("대상", fontSize = 14.sp, color = Momo.Sub)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("봇 전체", "방금 들은 대사").forEachIndexed { i, l -> Pill(l, target == i) { target = i } }
             }
-            Spacer(Modifier.height(12.dp))
-            Column(Modifier.background(Momo.Surface, Round).padding(horizontal = 18.dp)) {
-                REASONS.forEachIndexed { i, (title, sub) ->
-                    if (i > 0) HorizontalDivider(color = Momo.Line)
-                    CheckRow(title, sub, reason == i) { reason = i }
-                }
-            }
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(8.dp))
+            // 아직 고르지 않았으면 모두 선명하게, 고른 뒤에는 나머지를 흐리게
+            REASONS.forEachIndexed { i, (title, sub) -> CheckRow(title, sub, reason == i, dim = reason != null && reason != i) { reason = i } }
+            Spacer(Modifier.height(18.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("운영팀과 AI 검수가 함께 확인해요", Modifier.weight(1f), fontSize = 13.sp, color = Momo.Sub)
-                MainButton("취소", dark = false) { AppStore.close() }
-                MainButton("신고 보내기", enabled = reason != null) { sent = true }
+                PillButton("취소", light = true) { AppStore.close() }
+                PillButton("신고 보내기", enabled = reason != null) { sent = true }
             }
         } else {
-            Text(
-                "「${REASONS[reason ?: 0].first}」 사유로 ${if (target == 0) "봇 전체" else "방금 들은 대사"}를 신고했어요.\n확인 결과는 마이페이지 알림으로 알려 드려요.",
-                fontSize = 15.sp,
-            )
-            Spacer(Modifier.height(20.dp))
-            MainButton("닫기", Modifier.fillMaxWidth()) { AppStore.close() }
+            Text("「${REASONS[reason ?: 0].first}」 사유로 ${if (target == 0) "봇 전체" else "방금 들은 대사"}를 신고했어요.", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("확인 결과는 마이페이지 알림으로 알려 드려요.", fontSize = 14.sp, color = Momo.Sub)
+            Spacer(Modifier.height(24.dp))
+            PillButton("닫기", Modifier.fillMaxWidth()) { AppStore.close() }
         }
     }
 }

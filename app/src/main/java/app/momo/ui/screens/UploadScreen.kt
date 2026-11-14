@@ -1,19 +1,15 @@
 package app.momo.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,7 +33,7 @@ private val VISIBILITY = listOf("전체" to BotStatus.REVIEW, "링크" to BotSta
 fun UploadScreen(app: AppState, car: CarState) {
     val bot = (app.uploadBotId ?: Graph.creator.state.value.bot?.id ?: app.myBotIds.firstOrNull())
         ?.let { id -> app.bots.firstOrNull { it.id == id } }
-        ?: return Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("올릴 봇이 없어요", fontSize = 19.sp) }
+        ?: return Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("올릴 봇이 없어요", fontSize = 24.sp) }
 
     // 화면을 떠나기 전까지의 입력값. 봇이 바뀌면 처음부터.
     var one by remember(bot.id) { mutableStateOf(bot.oneLiner.take(30)) }
@@ -61,116 +57,96 @@ fun UploadScreen(app: AppState, car: CarState) {
         sent = status
     }
 
-    Row(Modifier.fillMaxSize().padding(horizontal = 32.dp, vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+    Row(Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(36.dp)) {
         // 왼쪽: 제목과 마켓 카드 미리보기
-        Row(Modifier.width(376.dp).fillMaxHeight()) {
-            IconBox("←") { AppStore.go(Screen.MY) }
-            Spacer(Modifier.width(20.dp))
-            Column(Modifier.fillMaxHeight()) {
+        Column(Modifier.width(280.dp).fillMaxHeight()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RoundButton("←") { AppStore.go(Screen.MY) }
+                Spacer(Modifier.width(12.dp))
                 Text("마켓에 올리기", fontSize = 30.sp, fontWeight = FontWeight.Bold)
-                Text("말로 고치거나 자동 값을 그대로 써요 · 정차 중에만", fontSize = 14.sp, color = Momo.Sub)
-                Spacer(Modifier.height(24.dp))
-                Cover(bot, Modifier.fillMaxWidth().aspectRatio(1.34f).clip(Round))
-                Spacer(Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(bot.title, Modifier.weight(1f), fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Badge("미리보기")
-                }
-                Text(one, fontSize = 14.sp, maxLines = 1)
-                Text(
-                    listOf(bot.creator, bot.playersLabel, mins.sorted().joinToString("·") { minLabel(it) }, rating.label).joinToString(" · "),
-                    fontSize = 13.sp, color = Momo.Sub,
-                )
-                Spacer(Modifier.weight(1f))
-                Panel(Modifier.fillMaxWidth()) {
-                    Text("창작 적립", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Text("다른 사람이 이 봇으로 이야기한 시간만큼 블루멤버스 포인트가 쌓여요(제휴 전제)", fontSize = 13.sp, color = Momo.Sub)
-                }
             }
+            Spacer(Modifier.height(4.dp))
+            Meta(listOf("말로 고치거나 자동 값을 그대로 써요", "정차 중에만"), size = 13.sp)
+            Spacer(Modifier.height(20.dp))
+            CoverCard(bot, Modifier.fillMaxWidth().aspectRatio(CARD_RATIO), top = { ImageTag("마켓 카드 미리보기") }) {
+                CardTitle(bot.title, size = 22.sp)
+                Spacer(Modifier.height(4.dp))
+                Meta(listOf(mins.sorted().joinToString("·") { minLabel(it) }, bot.playersLabel, rating.label), color = OnImageSub, size = 12.sp)
+                Spacer(Modifier.height(8.dp))
+                CardBody(one)
+                Spacer(Modifier.height(6.dp))
+                Text("만든 사람 ${bot.creator}", color = OnImageSub, fontSize = 12.sp)
+            }
+            Spacer(Modifier.weight(1f))
+            Text("다른 가족이 이 봇으로 이야기한 시간만큼 블루멤버스 포인트가 쌓여요 (제휴 전제)", fontSize = 13.sp, color = Momo.Sub)
         }
 
         // 가운데: 봇 정보
-        Panel(Modifier.weight(1f).fillMaxHeight()) {
-            Row {
-                Text("봇 정보", Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                Text("자동 생성됨", fontSize = 13.sp, color = Momo.Sub)
+        Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())) {
+            Meta(listOf("봇 정보", "자동 생성됨"), size = 13.sp)
+            Field("한 줄 소개", "${one.length}/30 · 눌러서 고쳐요") {
+                BasicTextField(
+                    one, { one = it.take(30) },
+                    Modifier.width(300.dp).background(Momo.Surface, RoundedCornerShape(50)).padding(horizontal = 18.dp, vertical = 12.dp),
+                    singleLine = true, textStyle = TextStyle(fontSize = 15.sp, color = Momo.Ink),
+                )
             }
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                Field("한 줄 소개", "${one.length}/30 · 눌러서 고쳐요") {
-                    BasicTextField(
-                        one, { one = it.take(30) },
-                        Modifier.width(280.dp).background(Momo.Bg, RoundedCornerShape(11.dp)).padding(11.dp),
-                        singleLine = true, textStyle = TextStyle(fontSize = 14.sp, color = Momo.Ink),
-                    )
-                }
-                Field("지원 경로 시간", "고른 시간마다 시작 설정을 만들어요") {
-                    ROUTES.forEach { m ->
-                        Pill(minLabel(m), m in mins, off = Momo.Bg) { mins = if (m in mins && mins.size > 1) mins - m else mins + m }
-                    }
-                }
-                Field("공개 범위", listOf("전체 공개는 AI 검수 후 마켓에 보여요", "링크 공개는 가족·친구만 봐요", "나만 봐요")[vis]) {
-                    VISIBILITY.forEachIndexed { i, (label, _) -> Pill(label, vis == i, off = Momo.Bg) { vis = i } }
-                }
-                Field("대상 등급", if (rating == Rating.KIDS) "키즈는 AI 검수 후 키즈 모드에 노출" else "키즈 모드에서는 보이지 않아요") {
-                    Rating.entries.forEach { r -> Pill(r.label, rating == r, off = Momo.Bg) { rating = r } }
-                }
-                Field("참여 인원 · 역할", "${bot.playersLabel} · ${bot.roles.joinToString(", ")}") {}
-                Field("태그", "마켓 검색에 쓰여요") {
-                    bot.tags.forEach { Pill("#$it", false, off = Momo.Bg) }
-                }
+            Field("지원 경로 시간", "고른 시간마다 시작 설정을 만들어요") {
+                ROUTES.forEach { m -> Pill(minLabel(m), m in mins) { mins = if (m in mins && mins.size > 1) mins - m else mins + m } }
+            }
+            Field("공개 범위", listOf("AI 검수 후 마켓에 보여요", "가족·친구만 링크로 봐요", "나만 봐요")[vis]) {
+                VISIBILITY.forEachIndexed { i, (label, _) -> Pill(label, vis == i) { vis = i } }
+            }
+            Field("대상 등급", if (rating == Rating.KIDS) "AI 검수 후 키즈 모드에 노출" else "키즈 모드에서는 보이지 않아요") {
+                Rating.entries.forEach { r -> Pill(r.label, rating == r) { rating = r } }
+            }
+            Field("참여 인원 · 역할", "${bot.playersLabel}  |  ${bot.roles.joinToString(", ")}") {}
+            Field("태그", "마켓 검색에 쓰여요") {
+                Text(bot.tags.joinToString("  ") { "#$it" }, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
 
-        // 오른쪽: 올리기 전 확인
-        Column(Modifier.width(300.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Panel(Modifier.fillMaxWidth().weight(1f)) {
-                Row {
-                    Text("올리기 전 확인", Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    Text("${listOf(tested, guide).count { it }} / 2", fontSize = 13.sp, color = Momo.Sub)
-                }
-                HorizontalDivider(Modifier.padding(top = 8.dp), color = Momo.Line)
-                CheckRow("테스트 플레이 1회", if (tested) "완료" else "한 번 들어 보고 올려요", tested) { tested = !tested }
-                HorizontalDivider(color = Momo.Line)
-                CheckRow("창작 가이드 · 저작권", if (guide) "확인했어요" else "눌러서 확인해 주세요", guide) { guide = !guide }
-                Spacer(Modifier.weight(1f))
-                if (sent != null) Text(
+        // 오른쪽: 올리기 전 확인. 아래쪽은 시연 패널(SimPanel) 버튼 자리라 비워 둔다.
+        Column(Modifier.width(280.dp).fillMaxHeight().padding(bottom = 44.dp)) {
+            val done = listOf(tested, guide).count { it }
+            Text("올리기 전 확인", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Meta(listOf("$done / 2 완료"), size = 13.sp)
+            Spacer(Modifier.height(10.dp))
+            ProgressBar(done / 2f, Modifier.fillMaxWidth())
+            Spacer(Modifier.height(8.dp))
+            CheckRow("테스트 플레이 1회", if (tested) "완료했어요" else "한 번 들어 보고 올려요", tested) { tested = !tested }
+            CheckRow("창작 가이드 · 저작권", if (guide) "확인했어요" else "눌러서 확인해 주세요", guide) { guide = !guide }
+            Spacer(Modifier.weight(1f))
+            if (sent != null) {
+                Meta(listOf("올리기 완료"), size = 13.sp)
+                Text(
                     when (sent) {
-                        BotStatus.REVIEW -> "AI 안전 검수 중 · 통과하면 마켓에 공개돼요"
-                        BotStatus.LINK -> "링크 공개로 저장했어요 · 가족 공유로 보낼 수 있어요"
-                        else -> "비공개로 저장했어요"
+                        BotStatus.REVIEW -> "AI 안전 검수 중이에요.\n통과하면 마켓에 공개돼요."
+                        BotStatus.LINK -> "링크 공개로 저장했어요.\n가족 공유로 보낼 수 있어요."
+                        else -> "비공개로 저장했어요."
                     },
-                    Modifier.fillMaxWidth().background(Momo.Bg, RoundedCornerShape(11.dp)).padding(12.dp),
-                    fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp, fontWeight = FontWeight.Bold,
                 )
-                else Text("검수는 보통 몇 분 안에 끝나요. 통과하면 마켓에 공개되고, 마이페이지에서 상태를 볼 수 있어요.", fontSize = 13.sp, color = Momo.Sub)
-            }
-            val ready = tested && guide
-            Row(
-                Modifier.fillMaxWidth().clip(Round).background(if (sent != null || ready) Momo.Ink else Momo.Sub)
-                    .clickable { if (sent != null) AppStore.go(Screen.MY) else if (ready) submit() }.padding(18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(if (sent != null) "올리기 완료" else if (vis == 0) "AI 안전 검수" else "저장", fontSize = 13.sp, color = Momo.Line)
-                    Text(
-                        if (sent != null) "마이페이지에서 상태 보기" else if (vis == 0) "검수 요청하고 올리기" else "이대로 저장하기",
-                        fontSize = 19.sp, fontWeight = FontWeight.Bold, color = Momo.OnAccent,
-                    )
-                }
-                Box(Modifier.size(48.dp).clip(CircleShape).background(Momo.Bg), contentAlignment = Alignment.Center) { Text("›", fontSize = 27.sp) }
+                Spacer(Modifier.height(16.dp))
+                PillButton("마이페이지에서 상태 보기", Modifier.fillMaxWidth(), icon = "›") { AppStore.go(Screen.MY) }
+            } else {
+                Text("검수는 보통 몇 분 안에 끝나요. 통과하면 마켓에 공개되고, 마이페이지에서 상태를 볼 수 있어요.", fontSize = 13.sp, color = Momo.Sub)
+                Spacer(Modifier.height(16.dp))
+                PillButton(
+                    if (vis == 0) "검수 요청하고 올리기" else "이대로 저장하기", Modifier.fillMaxWidth(), icon = "›",
+                    enabled = tested && guide, onClick = ::submit,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun Field(title: String, sub: String, trailing: @Composable RowScope.() -> Unit) {
-    HorizontalDivider(Modifier.padding(top = 8.dp), color = Momo.Line)
-    Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+private fun Field(title: String, sub: String, trailing: @Composable RowScope.() -> Unit) =
+    Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Text(sub, fontSize = 13.sp, color = Momo.Sub)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(7.dp), content = trailing)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), content = trailing)
     }
-}
