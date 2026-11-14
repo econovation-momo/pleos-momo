@@ -68,5 +68,7 @@ class SimCarSource : CarSource {
     fun arrive() {
         _state.update { it.copy(remainSec = 0, driving = false, gear = "P") }
         _events.tryEmit(CarEvent.Arrived)
+        // 도착한 목적지는 끝난 것이다. 남겨 두면 다음 이야기가 '남은 0분'으로 시작한다
+        _state.update { it.copy(destination = null, remainSec = null, remainMeters = null) }
     }
 }
