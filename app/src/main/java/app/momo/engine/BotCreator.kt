@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** 음성 제작의 고정 칸 4개. LLM이 자유 발화에서 채운다(JSON). */
@@ -56,20 +58,26 @@ data class CreateState(
  * 확정하면 표지를 프리셋에서 고르고 역할·시작 설정을 만들어 AppStore.addMyBot 까지 여기서 한다.
  */
 class BotCreator(private val llm: LlmClient, private val scope: CoroutineScope) {
+    private val answerLock = Mutex()
     private val _state = MutableStateFlow(CreateState())
     val state: StateFlow<CreateState> = _state.asStateFlow()
     private var llmFailed = false // 한 번 실패하면 앱이 꺼질 때까지 휴리스틱만 쓴다 (매 답마다 기다리지 않게)
 
     fun reset() { _state.value = CreateState() }
 
+    /** LLM을 기다리는 동안 들어온 답도 버리지 않고 들어온 순서대로 처리한다. */
     fun answer(text: String) {
-        val s = _state.value
-        if (s.busy || s.draft.complete || text.isBlank()) return
+        if (text.isBlank()) return
+        scope.launch { answerLock.withLock { handle(text) } }
+    }
+
+    private suspend fun handle(text: String) {
+        if (_state.value.draft.complete) return
         _state.update { it.copy(dialog = it.dialog + Turn("AI", it.question) + Turn("나", text), busy = true) }
-        scope.launch {
+        run {
             if (SafetyFilter.unsafe(text, AppStore.state.value.kids)) {
                 _state.update { it.copy(busy = false, question = "음, 그건 이야기에 넣기 어려워요. 다른 걸 말해 줄래요?") }
-                return@launch
+                return
             }
             val before = _state.value.draft
             val filled = before.merge(fromLlm(before, text) ?: BotDraft()).merge(Slots.heuristic(text, before.missing.firstOrNull()))
@@ -120,7 +128,7 @@ class BotCreator(private val llm: LlmClient, private val scope: CoroutineScope) 
 
     private companion object {
         const val TAG = "Momo.Creator"
-        const val LLM_TIMEOUT_MS = 8_000L
+        const val LLM_TIMEOUT_MS = 4_000L
         const val IMAGE_MS = 2_500L
         val COVERS = listOf(R.drawable.cover_kong, R.drawable.cover_dragon, R.drawable.cover_dino, R.drawable.cover_space, R.drawable.cover_bugs)
     }
@@ -183,7 +191,8 @@ object Slots {
         var voice = if (VOICES.any { it in t }) tidy(t) else null
         var world = if (voice == null && WORLDS.any { t.has(it) } && (creature == null || target == "세계관")) tidy(t) else null
 
-        when (target) {
+        // 목소리 설명으로 분류된 말은 다른 칸에 억지로 넣지 않는다("밝은 아이 목소리로!"가 세계관에 들어가지 않게)
+        if (voice == null || target == "목소리") when (target) {
             "캐릭터" -> if (character == null) character = tidy(t)
             "말투" -> if (tone == null) tone = tidy(t)
             "세계관" -> if (world == null) world = tidy(t)

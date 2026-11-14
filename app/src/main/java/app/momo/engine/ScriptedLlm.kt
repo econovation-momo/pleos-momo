@@ -81,7 +81,8 @@ class ScriptedLlm : LlmClient {
         val react = when {
             c.redirect -> s.redirect
             matched != null -> matched.react
-            heard != null && !trivial(heard) -> s.echo[echoPos++ % s.echo.size]
+            // 아이 말은 대개 짧다. 길게 들린 말(주변 대화, 잡음)은 되읽지 않고 대본 반응으로 넘어간다
+            heard != null && !trivial(heard) && heard.length <= MAX_ECHO -> s.echo[echoPos++ % s.echo.size]
             else -> beat.react
         }
         val event = matched?.event ?: beat.event
@@ -91,6 +92,7 @@ class ScriptedLlm : LlmClient {
     private fun trivial(h: String) = h.length <= 3 || TRIVIAL.any { h.startsWith(it) } && h.length <= 6
 
     private companion object {
+        const val MAX_ECHO = 20
         val TRIVIAL = listOf("응", "어", "네", "예", "좋아", "그래", "가자", "오케이", "알았어", "몰라")
     }
 }
