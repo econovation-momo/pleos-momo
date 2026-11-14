@@ -15,7 +15,7 @@ case "$1" in
     # Pleos Connect Virtual Console: 기어, 가속·브레이크(차속), 도어, 와이퍼, 공조 등
     "$ADB" forward tcp:8088 tcp:8088 && open http://127.0.0.1:8088/ ;;
   run)
-    ./gradlew :app:installDebug -q && "$ADB" shell am start -n ai.challenge.pleosapp/.MainActivity ;;
+    ./gradlew :app:installDebug -q && "$ADB" shell am start -n app.momo/.MainActivity ;;
   log)
     "$ADB" logcat -s PleosCheck:D ;;
   apk)
