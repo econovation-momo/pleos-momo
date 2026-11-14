@@ -1,6 +1,5 @@
 package app.momo.ui.overlays
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,15 +13,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.momo.Graph
@@ -32,99 +28,64 @@ import app.momo.core.Overlay
 import app.momo.core.Screen
 import app.momo.core.StoryBot
 import app.momo.ui.Momo
+import app.momo.ui.components.GlassCard
+import app.momo.ui.components.Hero
+import app.momo.ui.components.KoBreak
+import app.momo.ui.components.MetaLine
+import app.momo.ui.components.PillButton
+import app.momo.ui.components.Scrim
+import app.momo.ui.components.minLabel
 
-// 마켓·마이페이지·올리기 화면과 모달이 같이 쓰는 조각들이다. 표지·유리 카드 모양은 ui/components/MomoKit.kt와 같은 값을 쓴다.
-// 양식은 Figma 상단 4장(21:122, 21:7, 21:52, 21:88)을 따른다:
-// 이미지가 꽉 찬 카드 + 아래 그라데이션 위 흰 글씨, 알약 버튼, 얇은 진행 막대, 반투명 흰 유리 카드, 굵기는 Bold·Regular 두 단계.
-// 에뮬레이터 앱 창이 약 1256×850dp(160dpi)라 시안(1280×720) 수치를 1:1로 쓴다.
+// 마켓·마이페이지·올리기 화면과 모달이 같이 쓰는 조각 가운데 MomoKit(ui/components)에 없는 것만 둔다.
+// 표지·히어로·알약 버튼·유리 카드·진행 막대는 MomoKit을 쓴다. 구도는 Figma 상단 4장(21:122 캐러셀, 21:7 히어로, 21:52·21:88 장면)을 따른다.
 
-val Round = RoundedCornerShape(20.dp)
-private val PillShape = RoundedCornerShape(50)
 const val DIM = 0.4f // 선택되지 않은 것은 흐리게
-val OnImageSub = Color.White.copy(alpha = 0.75f)
+val OnImageSub = Color.White.copy(alpha = 0.8f)
+val PosterW = 313.dp // 21:122 세로 포스터 카드(가운데 카드는 330×500)
+val PosterH = 472.dp
 
-/** 필터·선택 칩: 선택은 검정 알약, 비선택은 연회색 알약 */
+/** 필터·선택 칩: 선택은 검정 알약, 비선택은 옅은 알약. 흰 바탕과 유리 카드 위에서 같이 쓴다. */
 @Composable
 fun Pill(label: String, on: Boolean, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) = Text(
     label,
-    modifier.clip(PillShape).background(if (on) Momo.Ink else Momo.Surface)
+    modifier.background(if (on) Momo.Ink else Momo.Ink.copy(alpha = 0.06f), RoundedCornerShape(50))
         .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-        .padding(horizontal = 18.dp, vertical = 10.dp),
+        .padding(horizontal = 16.dp, vertical = 9.dp),
     color = if (on) Momo.OnAccent else Momo.Ink, fontSize = 15.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
 )
 
-/**
- * 주 버튼(알약). 흰 바탕에서는 검정 알약에 흰 글자, onImage면 흰 알약에 검정 글자('이어서 시청' 버튼 모양).
- * light는 흰 바탕의 보조 버튼(연회색 알약). icon을 주면 앞에 검정(또는 흰) 원 안에 그린다.
- */
+/** 동그란 글자 버튼(✕, ← 등) */
 @Composable
-fun PillButton(
-    label: String, modifier: Modifier = Modifier, icon: String? = null, onImage: Boolean = false, light: Boolean = false,
-    enabled: Boolean = true, height: Dp = 52.dp, onClick: () -> Unit,
-) {
-    val bg = when { onImage -> Color.White; light -> Momo.Surface; else -> Momo.Ink }
-    val fg = if (onImage || light) Momo.Ink else Momo.OnAccent
-    val small = height < 48.dp
-    val side = if (small) 14.dp else 24.dp
-    Row(
-        modifier.height(height).alpha(if (enabled) 1f else DIM).clip(PillShape).background(bg)
-            .clickable(enabled = enabled, onClick = onClick).padding(start = if (icon != null) 8.dp else side, end = side),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center,
-    ) {
-        if (icon != null) {
-            Box(Modifier.size(height - 16.dp).clip(CircleShape).background(fg), contentAlignment = Alignment.Center) {
-                Text(icon, color = bg, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            }
-            Spacer(Modifier.width(10.dp))
-        }
-        Text(label, color = fg, fontSize = if (small) 14.sp else 17.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-    }
-}
-
-/** 동그란 글자 버튼(✕, ← 등). 장식 없이 연한 원만 둔다. */
-@Composable
-fun RoundButton(glyph: String, modifier: Modifier = Modifier, onClick: () -> Unit) = Box(
-    modifier.size(44.dp).clip(CircleShape).background(Momo.Ink.copy(alpha = 0.06f)).clickable(onClick = onClick),
+fun RoundButton(glyph: String, modifier: Modifier = Modifier, onImage: Boolean = false, onClick: () -> Unit) = Box(
+    modifier.size(44.dp).background(if (onImage) Color.White.copy(alpha = 0.18f) else Momo.Ink.copy(alpha = 0.06f), CircleShape)
+        .clickable(onClick = onClick),
     contentAlignment = Alignment.Center,
-) { Text(glyph, fontSize = 18.sp, color = Momo.Ink) }
-
-/** "15·45분 | 1~2명 | 키즈" 같은 메타 줄 */
-@Composable
-fun Meta(parts: List<String>, color: Color = Momo.Sub, size: TextUnit = 13.sp, modifier: Modifier = Modifier) =
-    Text(parts.filter { it.isNotEmpty() }.joinToString("  |  "), modifier, color = color, fontSize = size, maxLines = 1, overflow = TextOverflow.Ellipsis)
-
-/** 얇은 진행 막대(4dp, 둥근 끝) */
-@Composable
-fun ProgressBar(fraction: Float, modifier: Modifier = Modifier, track: Color = Momo.Ink.copy(alpha = 0.15f), fill: Color = Momo.Ink) =
-    Box(modifier.height(4.dp).clip(PillShape).background(track)) {
-        Box(Modifier.fillMaxHeight().fillMaxWidth(fraction.coerceIn(0f, 1f)).clip(PillShape).background(fill))
-    }
-
-/** 반투명 흰 유리 카드(Figma 21:52 '방금 들은 말' 카드) */
-@Composable
-fun GlassCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) = Column(
-    modifier.clip(Round).background(Color.White.copy(alpha = 0.9f))
-        .border(1.dp, Color.White.copy(alpha = 0.9f), Round).padding(28.dp),
-    content = content,
-)
+) { Text(glyph, fontSize = 18.sp, color = if (onImage) Color.White else Momo.Ink) }
 
 /** 어두운 스크림 위 유리 카드 모달. 바깥을 누르면 [onDismiss] */
 @Composable
 fun Modal(width: Dp, onDismiss: () -> Unit = AppStore::close, content: @Composable ColumnScope.() -> Unit) = Box(
-    Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.7f)) // 뒤 화면이 유리 카드에 비치지 않게 기본 스크림보다 조금 어둡게
+    Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.7f)) // 뒤 화면이 유리 카드에 비치지 않게 조금 어둡게
         .clickable(remember { MutableInteractionSource() }, indication = null, onClick = onDismiss),
     contentAlignment = Alignment.Center,
 ) {
-    GlassCard(Modifier.width(width).clickable(remember { MutableInteractionSource() }, indication = null) {}, content = content)
+    GlassCard(Modifier.width(width).clickable(remember { MutableInteractionSource() }, indication = null) {}, alpha = 0.92f) {
+        Column(Modifier.padding(vertical = 10.dp), content = content)
+    }
 }
+
+/** 흰 바탕·유리 카드 위 주 버튼: MomoKit 검정 알약(아이콘 없음). 못 누르는 상태는 흐리게 */
+@Composable
+fun DarkPill(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) =
+    PillButton(text, modifier.alpha(if (enabled) 1f else DIM), onImage = false, icon = null, height = 52.dp, fontSize = 17.sp) { if (enabled) onClick() }
 
 /** 모달 머리: 큰 제목, 메타 줄, 닫기 */
 @Composable
 fun ModalHeader(title: String, meta: List<String>) = Row(verticalAlignment = Alignment.Top) {
     Column(Modifier.weight(1f)) {
-        Text(title, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+        Text(title, fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(4.dp))
-        Meta(meta, size = 14.sp)
+        MetaLine(meta, fontSize = 14.sp)
     }
     RoundButton("✕") { AppStore.close() }
 }
@@ -132,7 +93,7 @@ fun ModalHeader(title: String, meta: List<String>) = Row(verticalAlignment = Ali
 /** 동그란 체크. 선택은 검정 원 */
 @Composable
 fun CheckDot(on: Boolean) = Box(
-    Modifier.size(26.dp).clip(CircleShape).background(if (on) Momo.Ink else Color.Transparent)
+    Modifier.size(26.dp).background(if (on) Momo.Ink else Color.Transparent, CircleShape)
         .then(if (on) Modifier else Modifier.border(1.5.dp, Momo.Ink, CircleShape)),
     contentAlignment = Alignment.Center,
 ) { if (on) Text("✓", color = Momo.OnAccent, fontSize = 15.sp, fontWeight = FontWeight.Bold) }
@@ -140,7 +101,7 @@ fun CheckDot(on: Boolean) = Box(
 /** 제목·설명·체크 한 줄. 고르지 않은 줄은 흐리게([dim]) */
 @Composable
 fun CheckRow(title: String, sub: String, on: Boolean, dim: Boolean = !on, onClick: () -> Unit) = Row(
-    Modifier.fillMaxWidth().clickable(onClick = onClick).alpha(if (dim) DIM else 1f).padding(vertical = 12.dp),
+    Modifier.fillMaxWidth().clickable(onClick = onClick).alpha(if (dim) DIM else 1f).padding(vertical = 10.dp),
     verticalAlignment = Alignment.CenterVertically,
 ) {
     Column(Modifier.weight(1f)) {
@@ -150,48 +111,45 @@ fun CheckRow(title: String, sub: String, on: Boolean, dim: Boolean = !on, onClic
     CheckDot(on)
 }
 
-/** 봇 표지. 그림이 없으면 어두운 그라데이션 */
-@Composable
-fun Cover(bot: StoryBot?, modifier: Modifier = Modifier) {
-    // 핵심 화면과 같은 표지 규칙(이미지 없으면 같은 그라데이션)을 쓰도록 MomoKit에 맡긴다
-    if (bot != null) app.momo.ui.components.Cover(bot, modifier)
-    else Box(modifier.background(Brush.linearGradient(listOf(Color(0xFF3A3F4B), Color(0xFF111111)))))
-}
-
-/** 이미지 위 작은 흰 반투명 알약(재생 수, 상태 등) */
+/** 이미지 위 작은 알약(재생 수, 상태 등) */
 @Composable
 fun ImageTag(text: String, dark: Boolean = false, modifier: Modifier = Modifier) = Text(
     text,
-    modifier.clip(PillShape).background(if (dark) Momo.Ink else Color.White.copy(alpha = 0.85f)).padding(horizontal = 10.dp, vertical = 4.dp),
+    modifier.background(if (dark) Momo.Ink else Color.White.copy(alpha = 0.85f), RoundedCornerShape(50)).padding(horizontal = 10.dp, vertical = 4.dp),
     color = if (dark) Momo.OnAccent else Momo.Ink, fontSize = 12.sp, fontWeight = FontWeight.Bold,
 )
 
 /**
- * 세로형 표지 카드(Figma 21:122 동화 선택 카드). 표지가 꽉 차고, 아래 그라데이션 위에 [content]를 흰 글씨로 얹는다.
- * [top]은 왼쪽 위에 겹친다.
+ * 21:122 세로 포스터 카드. 표지가 꽉 차고 아래 그라데이션 위에 가운데 정렬로 흰 제목·메타·두 줄 소개를 얹는다.
+ * bot이 null이면 어두운 그라데이션 카드(만들기·올리기·미발견 칸). focused=false면 흐리게 덮는다.
  */
 @Composable
-fun CoverCard(
-    bot: StoryBot?, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null,
-    top: @Composable RowScope.() -> Unit = {}, content: @Composable ColumnScope.() -> Unit,
-) = Box(modifier.clip(Round).then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)) {
-    Cover(bot, Modifier.matchParentSize())
-    Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.35f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.85f))))
-    Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), content = top)
-    Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(16.dp), content = content)
+fun PosterCard(
+    bot: StoryBot?, title: String, meta: List<String>, body: String?, modifier: Modifier,
+    focused: Boolean = true, titleSize: Int = 30, onClick: (() -> Unit)? = null,
+    top: @Composable RowScope.() -> Unit = {}, extra: @Composable ColumnScope.() -> Unit = {},
+) = Box(modifier.then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)) {
+    if (bot != null) Hero(bot, Modifier.fillMaxSize(), scrim = Scrim.BOTTOM)
+    else Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF3A3F4B), Color(0xFF111111)))))
+    Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), content = top)
+    Column(
+        Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 22.dp, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        extra()
+        Text(
+            title, color = Color.White, fontSize = titleSize.sp, lineHeight = (titleSize * 1.25f).sp, fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center, maxLines = 2, style = KoBreak,
+        )
+        if (meta.isNotEmpty()) { Spacer(Modifier.height(8.dp)); MetaLine(meta, OnImageSub, fontSize = 13.sp) }
+        if (body != null) {
+            Spacer(Modifier.height(14.dp))
+            Text(body, Modifier.fillMaxWidth(), color = Color.White, fontSize = 14.sp, lineHeight = 21.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+    }
+    if (!focused) Box(Modifier.fillMaxSize().background(Color.White.copy(alpha = 0.55f)))
 }
 
-/** 카드 안 흰 제목 */
-@Composable
-fun CardTitle(text: String, size: TextUnit = 19.sp) =
-    Text(text, color = Color.White, fontSize = size, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-
-/** 카드 안 흰 두 줄 소개 */
-@Composable
-fun CardBody(text: String) =
-    Text(text, color = Color.White, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 18.sp)
-
-fun minLabel(m: Int) = if (m >= 60 && m % 60 == 0) "${m / 60}시간" else "${m}분"
 val StoryBot.minsLabel get() = minutes.joinToString("·") { minLabel(it) }
 val StoryBot.playersLabel get() = if (maxPlayers <= 1) "1명" else "1~${maxPlayers}명"
 fun count(n: Int) = "%,d".format(n)

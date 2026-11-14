@@ -18,6 +18,7 @@ import app.momo.core.AppState
 import app.momo.core.AppStore
 import app.momo.core.BotStatus
 import app.momo.ui.Momo
+import app.momo.ui.components.GhostButton
 import kotlin.random.Random
 
 // ponytail: 가족 계정의 Pleos 차량 목록 대신 시연용 고정값이다.
@@ -53,8 +54,8 @@ fun ShareDialog(app: AppState) {
         }
         Spacer(Modifier.height(20.dp))
         if (!shared) Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PillButton("취소", light = true) { AppStore.close() }
-            PillButton("공유하기", enabled = cars.isNotEmpty()) {
+            GhostButton("취소", onImage = false) { AppStore.close() }
+            DarkPill("공유하기", enabled = cars.isNotEmpty()) {
                 if (bot.status == BotStatus.PRIVATE) AppStore.setStatus(bot.id, BotStatus.LINK)
                 shared = true
             }
@@ -64,7 +65,7 @@ fun ShareDialog(app: AppState) {
                 Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.Bold,
             )
             Spacer(Modifier.width(12.dp))
-            PillButton("닫기") { AppStore.close() }
+            DarkPill("닫기") { AppStore.close() }
         }
     }
 }
