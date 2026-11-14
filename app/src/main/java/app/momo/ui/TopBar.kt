@@ -12,6 +12,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,7 +36,7 @@ fun TopBar(app: AppState, gear: String, driving: Boolean) {
         Modifier.fillMaxWidth().height(72.dp).background(Momo.Bg).padding(horizontal = 24.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.background(Momo.Ink, RoundedCornerShape(6.dp)).padding(horizontal = 16.dp, vertical = 10.dp)) {
+        Box(Modifier.background(Color.White, RoundedCornerShape(6.dp)).padding(horizontal = 16.dp, vertical = 10.dp)) {
             Image(painterResource(R.drawable.logo_momo), "MOMO", Modifier.height(22.dp))
         }
         if (!driving && app.screen != Screen.PLAY && app.screen != Screen.CONNECT) {
