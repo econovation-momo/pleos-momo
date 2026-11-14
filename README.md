@@ -20,9 +20,10 @@
 | 키즈 모드·안전 | 키즈 등급 봇만 보여 주고 입력과 출력을 모두 유해 필터로 거릅니다. 창문 밖으로 손·머리를 내미는 행동처럼 차 안에서 위험한 유도는 모드와 상관없이 막습니다. 신고 기능이 있고, 키즈 모드를 끌 때는 부모 PIN을 확인합니다. | |
 | 오디오 공존 | 내비 안내가 나오면 볼륨만 줄이고, 통화·음성 명령이 오면 멈췄다가 끊긴 문장부터 다시 말합니다. | `AudioFocusRequest` (`AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK`) |
 
-## 시연 영상
+## 시연 영상과 화면 시안
 
-- **파일:** [`demo/econovation_MOMO_demo.mp4`](demo/econovation_MOMO_demo.mp4) (3분 33초, 1920×1080, 7.6MB)
+- **화면 시안:** [`demo/econovation_MOMO_화면시안.pdf`](demo/econovation_MOMO_화면시안.pdf) (9쪽). 에뮬레이터에서 실행한 앱의 주요 화면 16장을 이용 순서대로 묶고 화면마다 설명을 붙였습니다.
+- **시연 영상:** [`demo/econovation_MOMO_demo.mp4`](demo/econovation_MOMO_demo.mp4) (3분 33초, 1920×1080, 7.6MB)
 - **촬영 환경:** Pleos Connect Emulator v2.1에서 release APK를 adb로 조작하며 화면을 녹화했습니다. 장면 구성은 [docs/demo-video-scenario.md](docs/demo-video-scenario.md)를 따랐습니다.
 
 | 시각 | 장면 | 보여 주는 기능 |
