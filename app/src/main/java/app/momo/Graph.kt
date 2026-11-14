@@ -5,11 +5,11 @@ import app.momo.car.CarSource
 import app.momo.car.SimCarSource
 import app.momo.engine.BotCreator
 import app.momo.engine.LlmClient
+import app.momo.engine.PleosLlm
 import app.momo.engine.StoryEngine
 import app.momo.voice.TextVoice
 import app.momo.voice.Voice
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * 앱 전역 객체 연결. 세션별로 자기 줄만 고친다.
@@ -33,10 +33,7 @@ object Graph {
 
         voice = TextVoice()
 
-        llm = object : LlmClient {
-            override val name = "없음"
-            override fun stream(system: String, prompt: String) = emptyFlow<String>()
-        }
+        llm = PleosLlm(context)
 
         car.start()
         voice.start()
