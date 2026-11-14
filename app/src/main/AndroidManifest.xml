@@ -34,6 +34,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- 내비가 앞에 나와도 차량 콜백과 TTS·STT가 이어지도록 하는 포그라운드 서비스 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+
     <application
         android:allowBackup="false"
         android:label="@string/app_name"
@@ -56,5 +61,20 @@
         <activity android:name=".pleos.SdkCheckActivity" android:exported="true">
             <meta-data android:name="distractionOptimized" android:value="true" />
         </activity>
+
+        <service
+            android:name=".car.MomoService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback|microphone" />
+
+        <!-- 시연 백업: adb로 사용자 발화를 넣는 리시버(명령은 SayReceiver.kt 참고). DUMP 권한은 adb shell만 가진다. -->
+        <receiver
+            android:name=".voice.SayReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="app.momo.SAY" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

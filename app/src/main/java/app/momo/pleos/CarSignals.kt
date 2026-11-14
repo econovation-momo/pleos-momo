@@ -8,6 +8,7 @@ import android.car.drivingstate.CarUxRestrictionsManager
 import android.car.hardware.CarPropertyValue
 import android.car.hardware.property.CarPropertyManager
 import android.content.Context
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * AAOS 표준 Car API.
@@ -20,6 +21,10 @@ class CarSignals(private val context: Context) {
     private var ux: CarUxRestrictionsManager? = null
     private var props: CarPropertyManager? = null
 
+    /** 앱 화면용 값. SDK에서 아직 값을 못 받았으면 null이다. */
+    val driving = MutableStateFlow<Boolean?>(null)
+    val gear = MutableStateFlow<String?>(null)
+
     private val uxListener = CarUxRestrictionsManager.OnUxRestrictionsChangedListener { report(it) }
 
     private val propCallback = object : CarPropertyManager.CarPropertyEventCallback {
@@ -27,8 +32,17 @@ class CarSignals(private val context: Context) {
             when (value.propertyId) {
                 VehiclePropertyIds.PERF_VEHICLE_SPEED ->
                     SignalHub.put("Car/차속 km/h", "%.1f".format((value.value as Float) * 3.6f))
-                VehiclePropertyIds.GEAR_SELECTION ->
-                    SignalHub.put("Car/기어", VehicleGear.toString(value.value as Int))
+                VehiclePropertyIds.GEAR_SELECTION -> {
+                    val g = value.value as Int
+                    SignalHub.put("Car/기어", VehicleGear.toString(g))
+                    gear.value = when (g) {
+                        VehicleGear.GEAR_PARK -> "P"
+                        VehicleGear.GEAR_REVERSE -> "R"
+                        VehicleGear.GEAR_NEUTRAL -> "N"
+                        VehicleGear.GEAR_UNKNOWN -> null
+                        else -> "D" // GEAR_DRIVE와 수동 단수(1~9단)는 모두 전진으로 본다
+                    }
+                }
             }
         }
 
@@ -37,6 +51,7 @@ class CarSignals(private val context: Context) {
     }
 
     fun start() {
+        if (car != null) { subscribeProperties(); return } // 권한 허용 뒤 다시 불리면 구독만 다시 한다
         try {
             val c = Car.createCar(context)
             car = c
@@ -72,6 +87,7 @@ class CarSignals(private val context: Context) {
     }
 
     private fun report(r: CarUxRestrictions) {
+        driving.value = r.isRequiresDistractionOptimization
         SignalHub.put("Car/주행 규제", if (r.isRequiresDistractionOptimization) "ON (0x${r.activeRestrictions.toString(16)})" else "OFF")
     }
 
@@ -79,5 +95,6 @@ class CarSignals(private val context: Context) {
         runCatching { ux?.unregisterListener() }
         runCatching { props?.unregisterCallback(propCallback) }
         runCatching { car?.disconnect() }
+        car = null; ux = null; props = null
     }
 }

@@ -6,21 +6,44 @@ import ai.pleos.playground.navi.data.*
 import ai.pleos.playground.navi.helper.NaviHelper
 import ai.pleos.playground.navi.helper.listener.NaviHelperEventListener
 import android.content.Context
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /** NaviHelper SDK 3.0.5. 내비 앱에 요청을 보내고 이벤트를 받는다. */
 class NaviSignals(context: Context) {
     private val navi = NaviHelper(context.applicationContext)
 
+    /** 앱 화면용 값. 목적지가 없거나 아직 안 왔으면 null이다. */
+    val destination = MutableStateFlow<DestinationInfo?>(null)
+    var onArrived: () -> Unit = {}
+    var onRerouted: () -> Unit = {}
+    private var rerouted = false
+
     private val listener = object : NaviHelperEventListener {
         override fun onNavigationStatus(status: NavigationStatus) = SignalHub.put("Navi/상태", status)
-        override fun onRouteStarted(routeStartInfo: RouteStartInfo) =
+        override fun onRouteStarted(routeStartInfo: RouteStartInfo) {
             SignalHub.put("Navi/경로 시작", "${routeStartInfo.name} ${routeStartInfo.distance}m ${routeStartInfo.duration}s 통행료 ${routeStartInfo.tollFare}")
+            refreshAfterReroute()
+        }
+        override fun onReRouteEnded() {
+            SignalHub.put("Navi/재탐색", "완료")
+            refreshAfterReroute()
+        }
         override fun onRoutingCompleted() = SignalHub.put("Navi/경로 탐색", "완료")
-        override fun onDestinationInfo(destinationInfo: DestinationInfo) =
+        override fun onDestinationInfo(destinationInfo: DestinationInfo) {
             SignalHub.put("Navi/목적지", "${destinationInfo.name} 남은 ${destinationInfo.remainDistance}m / ${destinationInfo.remainTime}s")
-        override fun onDestinationArrived(destinationArrivedInfo: DestinationArrivedInfo) =
+            // 경로가 없을 때도 빈 값으로 올 수 있어서, 이름과 남은 시간이 모두 비면 목적지 없음으로 본다
+            val empty = destinationInfo.name.isNullOrBlank() && destinationInfo.remainTime.toLong() <= 0
+            destination.value = if (empty) null else destinationInfo
+            if (rerouted) { rerouted = false; onRerouted() }
+        }
+        override fun onDestinationArrived(destinationArrivedInfo: DestinationArrivedInfo) {
             SignalHub.put("Navi/도착", destinationArrivedInfo.name)
-        override fun onRouteCancelled() = SignalHub.put("Navi/경로 탐색", "취소됨")
+            onArrived()
+        }
+        override fun onRouteCancelled() {
+            SignalHub.put("Navi/경로 탐색", "취소됨")
+            destination.value = null
+        }
         override fun onTBTInfo(tbtInfoList: List<TBTInfo>) =
             SignalHub.put("Navi/다음 회전", tbtInfoList.firstOrNull()?.let { "${it.type} ${it.distance.toInt()}m" } ?: "없음")
         override fun onCurrentRoadSpeedLimit(speedLimit: Int) = SignalHub.put("Navi/제한속도", speedLimit)
@@ -47,6 +70,15 @@ class NaviSignals(context: Context) {
         } catch (e: Exception) {
             SignalHub.fail("Navi/SDK", e)
         }
+    }
+
+    /** 목적지 정보를 다시 요청한다. 답은 onDestinationInfo로 온다. */
+    fun refresh() = runCatching { navi.getDestinationInfo() }.onFailure { SignalHub.fail("Navi/목적지 조회", it) }
+
+    /** 경로가 바뀌면 남은 시간을 다시 받고, 새 값이 도착한 뒤에 onRerouted를 부른다. */
+    private fun refreshAfterReroute() {
+        rerouted = true
+        refresh()
     }
 
     /** 공식 문서 예제 목적지(서울 강남구 남부순환로 2621)로 경로를 요청한다. */
