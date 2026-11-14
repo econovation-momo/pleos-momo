@@ -17,7 +17,7 @@ data class AppState(
         SeatPos.DRIVER to "엄마", SeatPos.PASSENGER to "아빠", SeatPos.REAR_LEFT to "지우", SeatPos.REAR_RIGHT to "지호",
     ),
     val driverJoins: Boolean = false,
-    val marketMinutes: Int? = null,      // null = 전체. 기본값은 내비 남은 시간에 가까운 값
+    val marketMinutes: Int? = null,      // null = 아직 안 고름(내비 남은 시간에 가까운 값을 쓴다), 0 = 전체
     val following: Set<String> = emptySet(),
     val endingCards: List<EndingCard> = SAMPLE_CARDS,
     val uploadBotId: String? = null,
