@@ -58,6 +58,8 @@ class PleosVoice(context: Context) : Voice {
     /** stopSpeaking을 부를 때마다 올린다. 그 전에 줄을 선 문장은 말하지 않고 버린다. */
     @Volatile private var generation = 0
     @Volatile private var current: CompletableDeferred<String>? = null
+    // 이전 발화를 멈출 때 생긴 onStop이 늦게 와서 새 문장을 끝난 것으로 착각하지 않도록, onStart를 받은 뒤의 완료만 인정한다
+    @Volatile private var started = false
 
     private val paused = MutableStateFlow(false)
     @Volatile private var hasFocus = false
@@ -171,6 +173,7 @@ class PleosVoice(context: Context) : Voice {
     private suspend fun say(text: String): String {
         val done = CompletableDeferred<String>()
         current = done
+        started = false
         try {
             log("TTS 말하기: $text")
             tts.speak(text)
@@ -196,10 +199,10 @@ class PleosVoice(context: Context) : Voice {
 
     private val ttsListener = object : EventListener {
         override fun onReady() = Unit
-        override fun onStart() = log("TTS onStart")
+        override fun onStart() { started = true; log("TTS onStart") }
         override fun onUpdatedRms(rms: Double) = Unit
-        override fun onDone() { log("TTS onDone"); current?.complete("done") }
-        override fun onStop() { log("TTS onStop"); current?.complete("stop") }
+        override fun onDone() { log("TTS onDone"); if (started) current?.complete("done") }
+        override fun onStop() { log("TTS onStop"); if (started) current?.complete("stop") }
         override fun onError(errorType: TtsError) { log("TTS onError $errorType"); current?.complete("error") }
     }
 
