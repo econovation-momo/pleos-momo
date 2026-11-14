@@ -20,10 +20,10 @@ case "$1" in
     "$ADB" logcat -s PleosCheck:D ;;
   apk)
     # 제출 규칙: apk/팀명_앱이름_release.apk
-    name="${2:?사용법: ./scripts/dev.sh apk 팀명_앱이름}"
+    name="${2:-econovation_MOMO}"
     ./gradlew :app:assembleRelease -q
     mkdir -p apk && cp app/build/outputs/apk/release/app-release.apk "apk/${name}_release.apk"
     echo "apk/${name}_release.apk" ;;
   *)
-    echo "사용법: $0 <emulator|console|run|log|apk 팀명_앱이름>"; exit 1 ;;
+    echo "사용법: $0 <emulator|console|run|log|apk [econovation_MOMO]>"; exit 1 ;;
 esac

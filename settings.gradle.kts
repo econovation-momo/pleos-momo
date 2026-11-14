@@ -16,5 +16,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "momo"
+rootProject.name = "MOMO"
 include(":app")
