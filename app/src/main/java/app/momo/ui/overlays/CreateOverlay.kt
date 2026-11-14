@@ -172,7 +172,11 @@ private fun Controls(cs: CreateState, exit: () -> Unit) {
     var text by remember { mutableStateOf("") }
     val listening = status == VoiceStatus.LISTENING
     val bot = cs.bot
-    val inputOn = bot == null && !cs.busy && cs.image != ImageState.GENERATING
+    // LLM을 기다리는 동안 들어온 답도 BotCreator가 순서대로 처리하므로 busy여도 입력은 열어 둔다('생각 중' 표시만 한다)
+    val inputOn = bot == null && cs.image != ImageState.GENERATING
+    // 처리 대기 중인 답은 아직 dialog에 없으니, 시연 답변은 보낸 개수로 다음 차례를 센다
+    var demoSent by remember { mutableIntStateOf(0) }
+    val demoIndex = maxOf(cs.dialog.count { it.speaker == "나" }, demoSent)
     fun send() { if (text.isNotBlank()) { Graph.voice.inject(text.trim()); text = "" } }
 
     Row(Modifier.padding(start = 28.dp, end = 110.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -200,8 +204,11 @@ private fun Controls(cs: CreateState, exit: () -> Unit) {
                 )
             }
             if (text.isNotBlank()) { Spacer(Modifier.width(8.dp)); GhostButton("보내기", fontSize = 16.sp, onClick = ::send) }
-            val demo = DEMO_ANSWERS.getOrNull(cs.dialog.count { it.speaker == "나" })
-            if (demo != null && inputOn && text.isBlank()) { Spacer(Modifier.width(8.dp)); GhostButton("시연: 답변 넣기", fontSize = 16.sp) { Graph.voice.inject(demo) } }
+            val demo = DEMO_ANSWERS.getOrNull(demoIndex)
+            if (demo != null && inputOn && text.isBlank()) {
+                Spacer(Modifier.width(8.dp))
+                GhostButton("시연: 답변 넣기", fontSize = 16.sp) { demoSent = demoIndex + 1; Graph.voice.inject(demo) }
+            }
             Spacer(Modifier.weight(1f))
             val generating = cs.image == ImageState.GENERATING
             PillButton(

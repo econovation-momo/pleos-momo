@@ -46,7 +46,8 @@ fun UploadScreen(app: AppState, car: CarState) {
     var mins by remember(bot.id) { mutableStateOf(bot.minutes.toSet()) }
     var vis by remember(bot.id) { mutableIntStateOf(if (bot.status == BotStatus.LINK) 1 else 0) }
     var rating by remember(bot.id) { mutableStateOf(bot.rating) }
-    var tested by remember(bot.id) { mutableStateOf(true) }
+    // 이 봇으로 엔딩을 본 적이 있으면 테스트 플레이를 한 것으로 본다
+    var tested by remember(bot.id) { mutableStateOf(app.endingCards.any { it.botId == bot.id }) }
     var guide by remember(bot.id) { mutableStateOf(false) }
     var sent by remember(bot.id) { mutableStateOf<BotStatus?>(null) }
     val done = listOf(tested, guide).count { it }
