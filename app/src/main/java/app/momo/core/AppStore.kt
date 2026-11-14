@@ -21,6 +21,7 @@ data class AppState(
     val following: Set<String> = emptySet(),
     val endingCards: List<EndingCard> = SAMPLE_CARDS,
     val uploadBotId: String? = null,
+    val rideMin: Int? = null,            // 목적지 없이 시작할 때 고른 이야기 길이(분)
 ) {
     val bot get() = bots.first { it.id == botId }
     val visibleBots get() = bots.filter { (!kids || it.rating == Rating.KIDS) && it.status == BotStatus.PUBLIC }
