@@ -2,11 +2,12 @@ package app.momo
 
 import android.content.Context
 import app.momo.car.CarSource
+import app.momo.car.PleosCarSource
 import app.momo.car.SimCarSource
 import app.momo.engine.BotCreator
 import app.momo.engine.LlmClient
 import app.momo.engine.StoryEngine
-import app.momo.voice.TextVoice
+import app.momo.voice.PleosVoice
 import app.momo.voice.Voice
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.emptyFlow
@@ -29,9 +30,9 @@ object Graph {
     fun init(context: Context) {
         if (::engine.isInitialized) return
 
-        car = sim
+        car = PleosCarSource(context, sim, scope)
 
-        voice = TextVoice()
+        voice = PleosVoice(context)
 
         llm = object : LlmClient {
             override val name = "없음"

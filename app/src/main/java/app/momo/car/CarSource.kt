@@ -18,8 +18,11 @@ data class CarState(
     val remainSec: Int? = null,              // NaviHelper DestinationInfo.remainTime
     val remainMeters: Int? = null,           // NaviHelper DestinationInfo.remainDistance
     val seats: Map<SeatPos, SeatState> = DEFAULT_SEATS,
+    /** 실제 SDK에서 온 항목 이름(주행·기어·목적지·좌석 이름). 비어 있으면 전부 시뮬레이터 값이다. */
+    val live: Set<String> = emptySet(),
 ) {
     val riders get() = seats.values.count { it.occupied }
+    fun isLive(item: String) = item in live
 
     companion object {
         val DEFAULT_SEATS = mapOf(
