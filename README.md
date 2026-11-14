@@ -22,7 +22,7 @@
 
 ## 시연 영상
 
-- **파일:** `econovation_MOMO_demo.mp4` (3분 33초, 1920×1080). 저장소에는 넣지 않고 접수 때 따로 제출합니다.
+- **파일:** [`demo/econovation_MOMO_demo.mp4`](demo/econovation_MOMO_demo.mp4) (3분 33초, 1920×1080, 7.6MB)
 - **촬영 환경:** Pleos Connect Emulator v2.1에서 release APK를 adb로 조작하며 화면을 녹화했습니다. 장면 구성은 [docs/demo-video-scenario.md](docs/demo-video-scenario.md)를 따랐습니다.
 
 | 시각 | 장면 | 보여 주는 기능 |
