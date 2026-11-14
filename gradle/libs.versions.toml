@@ -1,0 +1,39 @@
+# 버전 기준: Pleos Vehicle SDK Sample App 1.0.0-sdk35 (AGP 8.8.2, Kotlin 2.0.0, compileSdk 35)
+[versions]
+agp = "8.8.2"
+kotlin = "2.0.0"
+composeBom = "2024.10.01"
+activityCompose = "1.9.3"
+lifecycle = "2.8.7"
+coreKtx = "1.15.0"
+
+# Pleos Connect SDK (2026-10-19 릴리스)
+pleosVehicle = "2.3.2"
+pleosNaviHelper = "3.0.5"
+pleosStt = "3.3.1"
+pleosTts = "3.3.1"
+pleosFusedLocation = "1.1.3"
+pleosLlm = "2.1.3.2"
+junit = "4.13.2"
+
+[libraries]
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+
+pleos-vehicle = { module = "ai.pleos.playground:Vehicle", version.ref = "pleosVehicle" }
+pleos-navihelper = { module = "ai.pleos.playground:NaviHelper", version.ref = "pleosNaviHelper" }
+pleos-stt = { module = "ai.pleos.playground:SpeechToText", version.ref = "pleosStt" }
+pleos-tts = { module = "ai.pleos.playground:TextToSpeech", version.ref = "pleosTts" }
+pleos-fusedlocation = { module = "ai.pleos.playground:FusedLocation", version.ref = "pleosFusedLocation" }
+pleos-llm = { module = "ai.pleos.playground:LLM", version.ref = "pleosLlm" }
+junit = { module = "junit:junit", version.ref = "junit" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

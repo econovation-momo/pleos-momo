@@ -1,0 +1,17 @@
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+captures/
+.kotlin/
+# 제출용 서명 키는 저장소에 올리지 않는다
+*.jks
+*.keystore
+keystore.properties
+
+# 내부 기획 메모 (제출물 아님)
+ideas-bank.md
+roleplay-design.md
+hackathon-references.md
