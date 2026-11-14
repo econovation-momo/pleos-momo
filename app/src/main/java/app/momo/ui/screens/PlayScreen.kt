@@ -116,7 +116,9 @@ private fun ChapterBar(play: PlayState, ink: Color, modifier: Modifier) {
         }
         Spacer(Modifier.height(7.dp))
         Text(
-            "${play.phase.label} · 도착까지 ${play.remainSec / 60}분 · 장면 ${play.sceneIndex + 1}/${play.sceneCount}",
+            // 끝의 llmName으로 지금 응답이 Pleos LLM에서 왔는지 대본 폴백에서 왔는지 드러낸다
+            "${play.phase.label} · 도착까지 ${play.remainSec / 60}분 · 장면 ${play.sceneIndex + 1}/${play.sceneCount}" +
+                play.llmName.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty(),
             Modifier.align(Alignment.End), color = ink.copy(alpha = .7f), fontSize = 15.sp,
         )
     }
