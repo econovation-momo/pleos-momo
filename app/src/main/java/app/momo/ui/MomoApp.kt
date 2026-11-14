@@ -1,5 +1,6 @@
 package app.momo.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
@@ -25,6 +26,18 @@ fun MomoApp() {
     val app by AppStore.state.collectAsStateWithLifecycle()
     val car by Graph.car.state.collectAsStateWithLifecycle()
     val blocked = car.driving && app.screen in PARKED_ONLY
+
+    // 뒤로 가기: 오버레이는 닫고, 상세 → 홈, 탑승자 → 상세, 마켓·마이 → 홈, 올리기 → 마이.
+    // 플레이 중에는 주행 중 오조작을 막으려고 삼키기만 한다. 그 밖(연결·홈·엔딩)은 시스템에 맡긴다.
+    val back: (() -> Unit)? = when {
+        app.screen == Screen.PLAY -> ({})
+        app.overlay != Overlay.NONE -> AppStore::close
+        app.screen == Screen.DETAIL || app.screen == Screen.MARKET || app.screen == Screen.MY -> ({ AppStore.go(Screen.HOME) })
+        app.screen == Screen.PLAYERS -> ({ AppStore.go(Screen.DETAIL) })
+        app.screen == Screen.UPLOAD -> ({ AppStore.go(Screen.MY) })
+        else -> null
+    }
+    BackHandler(enabled = back != null) { back?.invoke() }
 
     Column(Modifier.fillMaxSize().background(Momo.Bg)) {
         TopBar(app, car.gear, car.driving)
