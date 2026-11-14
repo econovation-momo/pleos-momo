@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import app.momo.Graph
 import app.momo.R
 import app.momo.car.CarState
+import app.momo.car.PleosCarSource
 import app.momo.core.*
 import app.momo.ui.Momo
 import app.momo.ui.components.*
@@ -46,7 +47,12 @@ fun PlayersScreen(app: AppState, car: CarState) {
     val bySeat = players.associateBy { it.seat }
     val min = rideMin(app, car)
     val cast = players.count { it.plays }
-    val tap = { pos: SeatPos -> Graph.sim.setSeat(pos, next(car.seats[pos])) }
+    // 시연 패널과 같은 경로로 바꿔야 실제 SDK 값(예: 운전석 빈 좌석)에 덮이지 않는다
+    val tap = { pos: SeatPos ->
+        val value = next(car.seats[pos])
+        (Graph.car as? PleosCarSource)?.simulate(*PleosCarSource.seatItems(pos).toTypedArray()) { setSeat(pos, value) }
+            ?: Graph.sim.setSeat(pos, value)
+    }
     val white = Color.White
 
     // 오른쪽: 차량 위 도식(유리 카드 하나). 좌석을 누르면 시연용으로 착좌·벨트가 바뀐다.
@@ -61,7 +67,11 @@ fun PlayersScreen(app: AppState, car: CarState) {
                         val (fx, fy) = SEAT_XY.getValue(pos)
                         val p = bySeat[pos]
                         val left = fx < .5f
-                        Avatar(p?.name, active = p?.plays == true, size = 46.dp, modifier = Modifier.offset(w * fx - 23.dp, h * fy - 23.dp).clickable { tap(pos) })
+                        Box(Modifier.offset(w * fx - 23.dp, h * fy - 23.dp).clickable { tap(pos) }, Alignment.Center) {
+                            Avatar(p?.name, active = p?.plays == true, size = 46.dp)
+                            // 빈 좌석은 눌러서 탑승자를 추가할 수 있다는 표시
+                            if (p == null) Text("+", color = Momo.Ink, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                        }
                         Column(
                             Modifier.width(110.dp).offset(if (left) w * .2f - 110.dp else w * .8f, h * fy - 22.dp),
                             horizontalAlignment = if (left) Alignment.End else Alignment.Start,
@@ -74,7 +84,7 @@ fun PlayersScreen(app: AppState, car: CarState) {
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                "좌석을 눌러 탑승·벨트를 바꿔요 (시연)", Modifier.fillMaxWidth(), color = Momo.Sub, fontSize = 15.sp,
+                "빈 좌석의 +를 누르면 탑승해요. 다시 누르면 벨트를 풀고, 한 번 더 누르면 내려요 (시연)", Modifier.fillMaxWidth(), color = Momo.Sub, fontSize = 15.sp,
                 textAlign = TextAlign.Center,
             )
         }

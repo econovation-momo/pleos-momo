@@ -63,15 +63,6 @@ class PleosCarSource(context: Context, val sim: SimCarSource, private val scope:
         vehicle.start(seatsOnly = true)
         scope.launch { state.collect { log("상태 ${describe(it)}") } }
         scope.launch { tick() }
-        // 탑승자 화면 등에서 Graph.sim으로 좌석을 바꿔도 SDK 값에 덮이지 않도록, 바뀐 좌석은 시뮬레이터 값으로 고정한다
-        scope.launch {
-            var prev = sim.state.value.seats
-            sim.state.collect { s ->
-                val changed = SeatPos.entries.filter { s.seats[it] != prev[it] }.flatMap { seatItems(it) }
-                if (changed.isNotEmpty()) overrides.update { it + changed }
-                prev = s.seats
-            }
-        }
     }
 
     override fun stop() {
