@@ -6,12 +6,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.momo.car.CarState
@@ -22,109 +23,122 @@ import app.momo.core.Overlay
 import app.momo.core.SeatPos
 import app.momo.core.StoryBot
 import app.momo.ui.Momo
+import app.momo.ui.components.*
 import app.momo.ui.overlays.*
 
 // ponytail: 나이·적립·이용권은 시연용 고정값이다. 탑승자 편집과 포인트 연동이 생기면 AppState로 옮긴다.
 private val AGES = mapOf("지우" to 7, "지호" to 5)
 private const val ENDING_TOTAL = 12
+private val CardW = 190.dp
+private val CardH = 280.dp
 
-/** S7 마이페이지: 가족 탑승자·창작 적립(왼쪽), 내가 만든 봇·엔딩 카드 보관함(오른쪽) */
+/** S7 마이페이지: 위는 내 봇 히어로(21:7)와 오른쪽 유리 카드 요약, 아래는 내 봇·엔딩 카드 포스터 행(21:122) */
 @Composable
 fun MyScreen(app: AppState, car: CarState) {
-    Row(Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(36.dp)) {
-        Family(app, car, Modifier.width(260.dp).fillMaxHeight())
-        Column(Modifier.weight(1f).fillMaxHeight()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("내가 만든 이야기 봇", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.width(10.dp))
-                Meta(listOf("${app.myBots.size}개", "가족 공유 · 수정 · 마켓에 올리기"), size = 14.sp, modifier = Modifier.weight(1f))
-                PillButton("말로 새로 만들기", icon = "+", height = 44.dp) { openCreate() }
-            }
-            Spacer(Modifier.height(14.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(app.myBots, key = { it.id }) { MyBotCard(it) }
-            }
-            Spacer(Modifier.height(24.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("엔딩 카드 보관함", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.width(10.dp))
-                Meta(listOf("${app.endingCards.size} / $ENDING_TOTAL", "${ENDING_TOTAL - app.endingCards.size}개 남음"), size = 14.sp)
-            }
-            Spacer(Modifier.height(14.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(app.endingCards) { c ->
-                    CoverCard(app.bots.firstOrNull { it.id == c.botId }, Modifier.height(210.dp).aspectRatio(CARD_RATIO)) {
-                        CardTitle(c.title, size = 15.sp)
-                        Spacer(Modifier.height(4.dp))
-                        Meta(listOf(c.grade, c.date), color = OnImageSub, size = 12.sp)
-                    }
-                }
-                item {
-                    Column(
-                        Modifier.height(210.dp).aspectRatio(CARD_RATIO).clip(Round).background(Momo.Surface).padding(16.dp),
-                        verticalArrangement = Arrangement.Bottom,
-                    ) {
-                        Text("?", Modifier.alpha(DIM), fontSize = 40.sp, fontWeight = FontWeight.Bold)
-                        Text("아직 못 만난 엔딩", Modifier.alpha(DIM), fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
-    }
-}
+    // 히어로에 띄울 봇: 처음에는 가장 최근에 만든 봇, 아래 카드를 누르면 그 봇
+    var heroId by remember { mutableStateOf<String?>(null) }
+    val hero = app.myBots.firstOrNull { it.id == heroId } ?: app.myBots.firstOrNull()
 
-@Composable
-private fun Family(app: AppState, car: CarState, modifier: Modifier) = Column(modifier) {
-    Text("마이페이지", fontSize = 40.sp, fontWeight = FontWeight.Bold)
-    Meta(listOf("우리 가족", "탑승자 ${car.riders}명"), size = 14.sp)
-    Spacer(Modifier.height(24.dp))
-    Text("우리 가족 탑승자", fontSize = 13.sp, color = Momo.Sub)
-    SeatPos.entries.forEach { seat ->
-        val name = app.names[seat] ?: return@forEach
-        Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(40.dp).clip(CircleShape).background(Momo.Ink), contentAlignment = Alignment.Center) {
-                Text(name.take(1), color = Momo.OnAccent, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            }
+    Column(Modifier.fillMaxSize().padding(top = 12.dp)) {
+        if (hero != null) Hero(hero, Modifier.fillMaxWidth().padding(horizontal = Gutter).height(400.dp)) {
+            HeroText(hero, Modifier.align(Alignment.CenterStart).padding(start = 40.dp).widthIn(max = 560.dp))
+            Summary(app, car, Modifier.align(Alignment.CenterEnd).padding(end = 24.dp).width(330.dp))
+        }
+
+        Row(Modifier.padding(start = Gutter, end = Gutter, top = 16.dp, bottom = 10.dp), verticalAlignment = Alignment.Bottom) {
+            Text("내 봇 · 엔딩 카드 보관함", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.width(12.dp))
-            Column {
-                Text(name + (AGES[name]?.let { " · ${it}세" } ?: ""), fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Text(seat.label, fontSize = 13.sp, color = Momo.Sub)
+            MetaLine(listOf("내 봇 ${app.myBots.size}개", "엔딩 ${app.endingCards.size} / $ENDING_TOTAL"), fontSize = 14.sp)
+        }
+        LazyRow(contentPadding = PaddingValues(start = Gutter, end = 110.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            item {
+                PosterCard(
+                    null, "말로 새로 만들기", emptyList(), null, Modifier.size(CardW, CardH), titleSize = 18, onClick = ::openCreate,
+                    extra = {
+                        Box(Modifier.size(48.dp).background(Color.White, CircleShape), Alignment.Center) { Text("+", fontSize = 26.sp, color = Momo.Ink) }
+                        Spacer(Modifier.height(14.dp))
+                    },
+                )
+            }
+            items(app.myBots, key = { it.id }) { b ->
+                PosterCard(
+                    b, b.title, listOf(b.status.label), null, Modifier.size(CardW, CardH), focused = b.id == hero?.id, titleSize = 18,
+                    onClick = { heroId = b.id }, top = { ImageTag("내 봇", dark = true) },
+                )
+            }
+            items(app.endingCards) { c ->
+                PosterCard(
+                    app.bots.firstOrNull { it.id == c.botId }, c.title, listOf(c.grade, c.date), null, Modifier.size(CardW, CardH), titleSize = 18,
+                    top = { ImageTag("엔딩 카드") },
+                )
+            }
+            item {
+                // 미발견 칸: 흐린 그라데이션 카드
+                PosterCard(
+                    null, "?", listOf("${ENDING_TOTAL - app.endingCards.size}개 남음"), null,
+                    Modifier.size(CardW, CardH).alpha(0.5f), titleSize = 34,
+                )
             }
         }
     }
-    Spacer(Modifier.weight(1f))
-    Meta(listOf("창작 적립", "이번 달"), size = 13.sp)
-    Row(verticalAlignment = Alignment.Bottom) {
-        Text("12,400", fontSize = 40.sp, fontWeight = FontWeight.Bold)
-        Text(" P", Modifier.padding(bottom = 7.dp), fontSize = 18.sp, fontWeight = FontWeight.Bold)
-    }
-    Text("내 봇이 이용된 시간만큼 블루멤버스 포인트로 쌓여요 (제휴 전제)", fontSize = 13.sp, color = Momo.Sub)
-    Spacer(Modifier.height(20.dp))
-    Meta(listOf("이용권", "팔로우 중인 창작자 ${app.following.size}명"), size = 13.sp)
-    Text("키즈 무제한 · 월 4,900원", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-    Spacer(Modifier.height(20.dp))
-    // 키즈 모드 보호: 끌 때만 부모 PIN(K1)
-    Meta(listOf("키즈 모드 ${if (app.kids) "켜짐" else "꺼짐"}", "부모 PIN 설정됨"), size = 13.sp)
-    Spacer(Modifier.height(8.dp))
-    if (app.kids) PillButton("키즈 모드 끄기 (PIN)", height = 44.dp) { AppStore.open(Overlay.KIDS_PIN) }
-    else PillButton("키즈 모드 다시 켜기", light = true, height = 44.dp) { AppStore.toggleKids() }
 }
 
+/** 히어로 왼쪽: 머리말, 상태, 큰 제목, 메타, 두 줄 소개, 알약 버튼 */
 @Composable
-private fun MyBotCard(b: StoryBot) = CoverCard(
-    b, Modifier.height(380.dp).aspectRatio(CARD_RATIO),
-    top = { ImageTag(b.status.label, dark = b.status == BotStatus.PUBLIC) },
-) {
-    CardTitle(b.title, size = 21.sp)
-    Spacer(Modifier.height(4.dp))
-    Meta(listOf(if (b.plays > 0) "이용 ${count(b.plays)}회" else "방금 만듦", b.minsLabel, b.playersLabel), color = OnImageSub, size = 12.sp)
-    Spacer(Modifier.height(12.dp))
-    if (b.status == BotStatus.PRIVATE) {
-        PillButton("마켓에 올리기", Modifier.fillMaxWidth(), icon = "↑", onImage = true, height = 44.dp) { goUpload(b.id) }
-        Spacer(Modifier.height(8.dp))
+private fun HeroText(b: StoryBot, modifier: Modifier) = Column(modifier) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text("내가 만든 이야기 봇", color = OnImageSub, fontSize = 17.sp)
+        Spacer(Modifier.width(10.dp))
+        ImageTag(b.status.label, dark = b.status == BotStatus.PUBLIC)
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        PillButton("가족 공유", Modifier.weight(1f), onImage = true, height = 40.dp) { openShare(b.id) }
-        PillButton("수정", Modifier.weight(1f), onImage = true, height = 40.dp) { goUpload(b.id) }
+    Spacer(Modifier.height(8.dp))
+    Text(b.title, color = Color.White, fontSize = 40.sp, lineHeight = 48.sp, fontWeight = FontWeight.Bold, maxLines = 2, style = KoBreak)
+    Spacer(Modifier.height(8.dp))
+    MetaLine(listOf(if (b.plays > 0) "이용 ${count(b.plays)}회" else "방금 만듦", b.minsLabel, b.playersLabel, b.rating.label), OnImageSub)
+    Spacer(Modifier.height(14.dp))
+    Text(b.oneLiner, color = Color.White, fontSize = 17.sp, lineHeight = 25.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    Spacer(Modifier.height(24.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (b.status == BotStatus.PRIVATE) {
+            PillButton("마켓에 올리기", height = 56.dp, fontSize = 18.sp, icon = { Text("↑", color = it, fontSize = 16.sp, fontWeight = FontWeight.Bold) }) { goUpload(b.id) }
+            GhostButton("가족 공유") { openShare(b.id) }
+        } else PillButton("가족 공유", height = 56.dp, fontSize = 18.sp, icon = { Text("↗", color = it, fontSize = 16.sp, fontWeight = FontWeight.Bold) }) { openShare(b.id) }
+        GhostButton("수정") { goUpload(b.id) }
+    }
+}
+
+/** 히어로 오른쪽 유리 카드: 가족 탑승자, 창작 적립, 이용권, 키즈 모드 PIN */
+@Composable
+private fun Summary(app: AppState, car: CarState, modifier: Modifier) = GlassCard(modifier) {
+    MetaLine(listOf("우리 가족", "탑승자 ${car.riders}명"), fontSize = 13.sp)
+    Spacer(Modifier.height(10.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        SeatPos.entries.forEach { seat ->
+            val name = app.names[seat] ?: return@forEach
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Avatar(name, active = car.seats[seat]?.occupied == true, size = 44.dp)
+                Text(name + (AGES[name]?.let { " ${it}세" } ?: ""), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+    MetaLine(listOf("창작 적립", "이번 달"), fontSize = 13.sp)
+    Row(verticalAlignment = Alignment.Bottom) {
+        Text("12,400", fontSize = 34.sp, fontWeight = FontWeight.Bold)
+        Text(" P", Modifier.padding(bottom = 6.dp), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+    }
+    Text("블루멤버스 포인트 · 제휴 전제", fontSize = 12.sp, color = Momo.Sub)
+    Spacer(Modifier.height(12.dp))
+    MetaLine(listOf("이용권", "팔로우 ${app.following.size}명"), fontSize = 13.sp)
+    Text("키즈 무제한 · 월 4,900원", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+    Spacer(Modifier.height(14.dp))
+    // 키즈 모드 보호: 끌 때만 부모 PIN(K1)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(if (app.kids) "키즈 모드 켜짐" else "키즈 모드 꺼짐", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text("끌 때만 부모 PIN을 물어요", fontSize = 12.sp, color = Momo.Sub)
+        }
+        if (app.kids) PillButton("끄기", onImage = false, icon = null, height = 40.dp, fontSize = 14.sp) { AppStore.open(Overlay.KIDS_PIN) }
+        else GhostButton("다시 켜기", onImage = false, fontSize = 14.sp) { AppStore.toggleKids() }
     }
 }

@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import app.momo.core.AppState
 import app.momo.core.AppStore
 import app.momo.ui.Momo
+import app.momo.ui.components.GhostButton
 
 // ponytail: 부모 PIN은 시연용 고정값이다. 설정 화면이 생기면 저장소로 옮긴다.
 private const val PARENT_PIN = "0000"
@@ -62,7 +63,7 @@ fun KidsPinDialog(app: AppState) {
                 }
             }
             Spacer(Modifier.height(10.dp))
-            PillButton("취소", Modifier.fillMaxWidth(), light = true) { AppStore.close() }
+            GhostButton("취소", onImage = false) { AppStore.close() }
         }
     }
 }
