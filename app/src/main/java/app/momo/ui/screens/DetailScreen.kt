@@ -29,7 +29,7 @@ import app.momo.voice.VoiceStatus
 import app.momo.ui.components.*
 import kotlinx.coroutines.launch
 
-/** S3 봇 상세: Figma 21:7(꽉 찬 배경 이미지 + 왼쪽 텍스트) 위에 봇 정보를 얹는다. */
+/** S3 봇 상세(구도 B, 21:7): 꽉 찬 배경 위 왼쪽에 봇 소개를 쌓고, 오른쪽 유리 카드 하나에 캐릭터·역할·만든 사람을 담는다. */
 @Composable
 fun DetailScreen(app: AppState, car: CarState) {
     val bot = app.bot
@@ -39,37 +39,25 @@ fun DetailScreen(app: AppState, car: CarState) {
     val voice by Graph.voice.status.collectAsStateWithLifecycle()
     val sample = bot.exampleDialogues.firstOrNull()?.substringAfter(": ") ?: bot.oneLiner
 
-    Hero(
-        bot, Modifier.fillMaxSize().padding(start = Gutter, end = Gutter, bottom = Gutter).clip(RoundedCornerShape(4.dp)),
-        image = bot.scenes.firstOrNull() ?: bot.cover, // 가로로 긴 장면 그림이 있으면 배경으로
-    ) {
-        Column(
-            Modifier.fillMaxHeight().fillMaxWidth(.55f).padding(start = 48.dp, end = 16.dp),
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Text("STORY BOT · ${bot.character.name}", color = Color.White, fontSize = 22.sp)
-            Spacer(Modifier.height(10.dp))
-            Text(bot.title, color = Color.White, fontSize = 40.sp, lineHeight = 48.sp, fontWeight = FontWeight.Bold, maxLines = 2, style = KoBreak)
-            Spacer(Modifier.height(4.dp))
-            Text(bot.oneLiner, color = Color.White, fontSize = 21.sp, lineHeight = 28.sp)
-            Spacer(Modifier.height(22.dp))
-            MetaLine(botMeta(bot, min), Color.White.copy(alpha = .7f))
-            Spacer(Modifier.height(22.dp))
-            Text(bot.description, color = Color.White, fontSize = 18.sp, lineHeight = 28.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(26.dp))
-            StartBar(bot, start.minutes, destLabel(app, car))
-            Spacer(Modifier.height(28.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                PillButton("이 봇으로 출발 준비", height = 64.dp, fontSize = 22.sp) { AppStore.go(Screen.PLAYERS) }
-                Spacer(Modifier.width(12.dp))
-                // 목소리 미리듣기: 예시 대사 한 줄을 캐릭터 목소리로 말한다
-                GhostButton(if (voice == VoiceStatus.SPEAKING) "말하는 중…" else "목소리 미리듣기") {
-                    scope.launch { Graph.voice.speak(sample) }
-                }
+    HeroScreen(bot, side = { InfoPanel(app, bot, sample, Modifier.width(380.dp)) }) {
+        HeroHeader(
+            kicker = "STORY BOT · ${bot.character.name}",
+            title = bot.title,
+            subtitle = bot.oneLiner,
+            meta = botMeta(bot, min),
+            body = bot.description,
+        )
+        Spacer(Modifier.height(26.dp))
+        StartBar(bot, start.minutes, destLabel(app, car))
+        Spacer(Modifier.height(28.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            PillButton("이 봇으로 출발 준비", height = 64.dp, fontSize = 22.sp) { AppStore.go(Screen.PLAYERS) }
+            Spacer(Modifier.width(12.dp))
+            // 목소리 미리듣기: 예시 대사 한 줄을 캐릭터 목소리로 말한다
+            GhostButton(if (voice == VoiceStatus.SPEAKING) "말하는 중…" else "목소리 미리듣기") {
+                scope.launch { Graph.voice.speak(sample) }
             }
         }
-
-        InfoPanel(app, bot, sample, Modifier.align(Alignment.TopEnd).padding(24.dp).width(400.dp))
     }
 }
 
