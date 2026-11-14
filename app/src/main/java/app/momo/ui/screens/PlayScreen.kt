@@ -43,7 +43,7 @@ fun PlayScreen(app: AppState, car: CarState) {
     val bot = play.bot
 
     LaunchedEffect(play.ending) {
-        play.ending?.let { AppStore.addEndingCard(it); AppStore.go(Screen.ENDING) }
+        play.ending?.let { AppStore.go(Screen.ENDING) } // 보관함 저장은 엔진이 도착 때 한다
     }
 
     if (bot == null) {

@@ -33,7 +33,7 @@ import app.momo.core.Screen
 import app.momo.core.StoryBot
 import app.momo.ui.Momo
 
-// 마켓·마이페이지·올리기 화면과 모달이 같이 쓰는 조각들이다. 병합 때 ui/components/MomoKit.kt로 합친다.
+// 마켓·마이페이지·올리기 화면과 모달이 같이 쓰는 조각들이다. 표지·유리 카드 모양은 ui/components/MomoKit.kt와 같은 값을 쓴다.
 // 양식은 Figma 상단 4장(21:122, 21:7, 21:52, 21:88)을 따른다:
 // 이미지가 꽉 찬 카드 + 아래 그라데이션 위 흰 글씨, 알약 버튼, 얇은 진행 막대, 반투명 흰 유리 카드, 굵기는 Bold·Regular 두 단계.
 // 에뮬레이터 앱 창이 약 1256×850dp(160dpi)라 시안(1280×720) 수치를 1:1로 쓴다.
@@ -103,8 +103,8 @@ fun ProgressBar(fraction: Float, modifier: Modifier = Modifier, track: Color = M
 /** 반투명 흰 유리 카드(Figma 21:52 '방금 들은 말' 카드) */
 @Composable
 fun GlassCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) = Column(
-    modifier.clip(RoundedCornerShape(24.dp)).background(Color.White.copy(alpha = 0.9f))
-        .border(1.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(24.dp)).padding(28.dp),
+    modifier.clip(Round).background(Color.White.copy(alpha = 0.9f))
+        .border(1.dp, Color.White.copy(alpha = 0.9f), Round).padding(28.dp),
     content = content,
 )
 
@@ -153,9 +153,9 @@ fun CheckRow(title: String, sub: String, on: Boolean, dim: Boolean = !on, onClic
 /** 봇 표지. 그림이 없으면 어두운 그라데이션 */
 @Composable
 fun Cover(bot: StoryBot?, modifier: Modifier = Modifier) {
-    val res = bot?.cover
-    if (res != null) Image(painterResource(res), bot.title, modifier, contentScale = ContentScale.Crop)
-    else Box(modifier.background(Brush.linearGradient(listOf(Color(0xFF6B7280), Color(0xFF1F2328)))))
+    // 핵심 화면과 같은 표지 규칙(이미지 없으면 같은 그라데이션)을 쓰도록 MomoKit에 맡긴다
+    if (bot != null) app.momo.ui.components.Cover(bot, modifier)
+    else Box(modifier.background(Brush.linearGradient(listOf(Color(0xFF3A3F4B), Color(0xFF111111)))))
 }
 
 /** 이미지 위 작은 흰 반투명 알약(재생 수, 상태 등) */

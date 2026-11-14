@@ -22,6 +22,7 @@
     <!-- SpeechToText / TextToSpeech SDK -->
     <uses-permission android:name="pleos.car.permission.STT_SERVICE" />
     <uses-permission android:name="pleos.car.permission.TTS_SERVICE" />
+    <uses-permission android:name="pleos.car.permission.LLM_SERVICE" />
 
     <!-- FusedLocation SDK (dangerous: 실행 중 요청 필요) -->
     <uses-permission android:name="pleos.car.permission.FUSED_LOCATION" />
